@@ -21,20 +21,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hilo Dice Tracker',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(
-          0xFF060B19,
-        ), // Dark Navy Background
-        primaryColor: const Color(0xFF1A73E8),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Light background
+        primaryColor: const Color(0xFF2E7CF6),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1A73E8),
-          brightness: Brightness.dark,
-          surface: const Color(0xFF131B2C),
+          seedColor: const Color(0xFF2E7CF6),
+          brightness: Brightness.light,
+          surface: Colors.white,
         ),
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Dice Tracker'),
+      home: const MyHomePage(title: 'Dice Analysis'),
     );
   }
 }
@@ -51,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final formKey = GlobalKey<FormState>();
   final _numberController = TextEditingController();
+  String _selectedFilter = 'All'; // Track selected filter
 
   @override
   void initState() {
@@ -64,9 +63,14 @@ class _MyHomePageState extends State<MyHomePage> {
       var provider = Provider.of<AppProvider>(context, listen: false);
       provider.addNumber(Numbers(int.parse(number)));
       _numberController.clear();
-
-      // Removed SnackBar to keep UI clean as per modern design,
-      // or we can add a subtle one if needed.
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณากรอกข้อมูลก่อนบันทึก'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -84,262 +88,363 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F1623),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              // Dashboard Card
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAEFF5), // Light grey/blue ish
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dice Tracker Dashboard',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Analyze dice frequency patterns from\nyour input data',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Stats Cards
+              Consumer<AppProvider>(
+                builder: (context, provider, child) {
+                  final currentResult =
+                      provider.numbers.isNotEmpty
+                          ? provider.numbers.first.value
+                              .toString() // Assuming list is ordered new first
+                          : '-';
+                  final count = provider.numbers.length;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Icon(Icons.casino, color: Color(0xFF5A9DFF)),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: _buildStatCard(
+                          'CURRENT RESULT',
+                          currentResult,
+                          imagePath: 'assets/images/dice.png',
+                          isHighlight: true, // Blue number
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'COUNT DICE',
+                          '$count',
+                          unit: 'rolls',
                         ),
                       ),
                     ],
-                  ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Input Section
+              const Text(
+                'Input Result',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
 
-              // Stats Cards
-              // Consumer<AppProvider>(
-              //   builder: (context, provider, child) {
-              //     final currentResult =
-              //         provider.numbers.isNotEmpty
-              //             ? provider.numbers.last.value
-              //             : '-';
-              //     final count = provider.numbers.length;
-
-              //     return Row(
-              //       children: [
-              //         Expanded(
-              //           child: _buildStatCard(
-              //             'ผลลัพธ์ล่าสุด',
-              //             '$currentResult',
-              //             Icons.casino_outlined,
-              //             Colors.blueAccent,
-              //           ),
-              //         ),
-              //         const SizedBox(width: 16),
-              //         Expanded(
-              //           child: _buildStatCard(
-              //             'จำนวนครั้ง',
-              //             '$count ครั้ง',
-              //             null,
-              //             null,
-              //           ),
-              //         ),
-              //       ],
-              //     );
-              //   },
-              // ),
-
-              const SizedBox(height: 24),
-
-              // Entry Section
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F1623),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white10),
-                ),
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 3,
-                            height: 16,
-                            color: Colors.blueAccent,
-                            margin: const EdgeInsets.only(right: 8),
+              Form(
+                key: formKey,
+                child: TextFormField(
+                  controller: _numberController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                  textAlign:
+                      TextAlign
+                          .left, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
+                  // Let's assume left input, icon right.
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 18,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF1F5F9), // Light grey background
+                    hintText: '',
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        widthFactor: 1.0,
+                        child: Text(
+                          '123',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
                           ),
-                          const Text(
-                            'บันทึกข้อมูล',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _numberController,
-                              style: const TextStyle(color: Colors.white),
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'ระบุแต้ม...',
-                                hintStyle: TextStyle(color: Colors.grey[600]),
-                                filled: true,
-                                fillColor: const Color(0xFF050B18),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                suffixIcon: const Icon(
-                                  Icons.edit,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty)
-                                  return 'กรุณาระบุ';
-                                if (int.tryParse(value) == null)
-                                  return 'ตัวเลขไม่ถูกต้อง';
-                                return null;
-                              },
-                              onFieldSubmitted: (_) => _submitNumber(),
-                            ),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCBD5E1), // Grey border
+                        width: 1,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCBD5E1), // Grey border
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF3B82F6),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFEF4444),
+                        width: 1.5,
+                      ),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFEF4444),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please specify the number.';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'The number is invalid.';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (_) => _submitNumber(),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Buttons Row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton.icon(
+                      onPressed: _submitNumber,
+                      icon: const Icon(
+                        Icons.check,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Enter',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6), // Blue
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton.icon(
+                      onPressed: _resetHistory,
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 18,
+                        color: Color(0xFFEF4444),
+                      ),
+                      label: const Text(
+                        'Reset',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFEF2F2), // Light Red
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: OutlinedButton.icon(
+                      onPressed: _navigateToHistory,
+                      icon: const Icon(
+                        Icons.history,
+                        size: 18,
+                        color: Color(0xFF3B82F6),
+                      ),
+                      label: const Text(
+                        'History',
+                        style: TextStyle(
+                          color: Color(0xFF3B82F6),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Filters
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip('All', _selectedFilter == 'All'),
+                    _buildFilterChip('Single', _selectedFilter == 'Single'),
+                    _buildFilterChip('Pair', _selectedFilter == 'Pair'),
+                    _buildFilterChip('Triple', _selectedFilter == 'Triple'),
+                    _buildFilterChip('Sum', _selectedFilter == 'Sum'),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Data Table Header/Body
+              Consumer<AppProvider>(
+                builder: (context, provider, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
-                          const SizedBox(width: 12),
-                          InkWell(
-                            onTap: _submitNumber,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF2E7CF6),
-                                    Color(0xFF1A5BB8),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'DICE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                  letterSpacing: 1,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Row(
-                                children: [
+                              Row(
+                                children: const [
                                   Text(
-                                    'บันทึก',
+                                    'FREQUENCY',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
+                                      color: Color(0xFF64748B),
+                                      letterSpacing: 1,
                                     ),
                                   ),
+                                  SizedBox(width: 4),
                                   Icon(
-                                    Icons.chevron_right,
-                                    color: Colors.white,
-                                    size: 18,
+                                    Icons.unfold_more,
+                                    size: 16,
+                                    color: Color(0xFF94A3B8),
                                   ),
                                 ],
                               ),
+                            ],
+                          ),
+                        ),
+
+                        // Table Rows
+                        Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                              bottom: Radius.circular(12),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Divider(color: Colors.white10, height: 1),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildActionButton(
-                              'รีเซ็ต',
-                              Icons.refresh,
-                              Colors.redAccent.withOpacity(0.8),
-                              _resetHistory,
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: Colors.white10,
-                          ),
-                          Expanded(
-                            child: _buildActionButton(
-                              'ประวัติ',
-                              Icons.history,
-                              Colors.grey,
-                              _navigateToHistory,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                          child: Column(children: _buildStatsRows(provider)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-
-              const SizedBox(height: 24),
-
-              // Analysis Section (Visual Only for now)
-              // Container(
-              //   decoration: BoxDecoration(
-              //     color: const Color(0xFF0F1623),
-              //     borderRadius: BorderRadius.circular(24),
-              //     border: Border.all(color: Colors.white10),
-              //   ),
-              //   padding: const EdgeInsets.all(20),
-              //   child: Column(
-              //     children: [
-              //       Row(
-              //         children: [
-              //           Container(
-              //             width: 3,
-              //             height: 16,
-              //             color: Colors.blueAccent,
-              //             margin: const EdgeInsets.only(right: 8),
-              //           ),
-              //           const Text(
-              //             'วิเคราะห์ผล',
-              //             style: TextStyle(
-              //               color: Colors.white,
-              //               fontWeight: FontWeight.w600,
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //       const SizedBox(height: 16),
-              //       SingleChildScrollView(
-              //         scrollDirection: Axis.horizontal,
-              //         child: Row(
-              //           children: [
-              //             _buildAnalysisTab('ทั้งหมด', true),
-              //             _buildAnalysisTab('เตี่ยว', false),
-              //             _buildAnalysisTab('คู่', false),
-              //             _buildAnalysisTab('ตอง', false),
-              //             _buildAnalysisTab('รวม', false),
-              //           ],
-              //         ),
-              //       ),
-              //       const SizedBox(height: 16),
-              //       _buildFrequencyTable(),
-              //     ],
-              //   ),
-              // ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -349,70 +454,266 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildStatCard(
     String title,
-    String value,
+    String value, {
     IconData? icon,
-    Color? iconColor,
-  ) {
+    String? imagePath,
+    bool isHighlight = false,
+    String? unit,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2C),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                Icon(icon, color: Colors.white70, size: 16),
+              if (imagePath != null) ...[
+                Image.asset(
+                  imagePath,
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 6),
+              ] else if (icon != null) ...[
+                Icon(icon, size: 16, color: Colors.grey[400]),
                 const SizedBox(width: 6),
               ],
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 10,
-                  letterSpacing: 1,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF94A3B8),
+                  letterSpacing: 0.8,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              color: iconColor ?? Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
+
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Show dice for CURRENT RESULT inline
+              if (title == 'CURRENT RESULT' && value != '-') ...[
+                ..._buildDiceRow(value),
+                const SizedBox(width: 15),
+              ],
+
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      isHighlight
+                          ? const Color(0xFF2E7CF6)
+                          : const Color(0xFF1E293B),
+                ),
+              ),
+              if (unit != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  unit,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Text(
+  List<Widget> _buildDiceRow(String value) {
+    String paddedValue = value.padLeft(3, '0');
+    List<Widget> dice = [];
+
+    for (int i = 0; i < 3 && i < paddedValue.length; i++) {
+      int digit = int.tryParse(paddedValue[i]) ?? 0;
+      if (digit >= 1 && digit <= 6) {
+        dice.add(_buildDice(digit));
+        if (i < 2) dice.add(const SizedBox(width: 4));
+      }
+    }
+
+    return dice;
+  }
+
+  Widget _buildDice(int number) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+          color: const Color.fromARGB(255, 177, 188, 201),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 1,
+            offset: const Offset(0, 0.5),
+          ),
+        ],
+      ),
+      child: CustomPaint(painter: DicePainter(number)),
+    );
+  }
+
+  // Filter chip method
+  Widget _buildFilterChip(String label, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: isSelected ? const Color(0xFF2E7CF6) : Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedFilter = label;
+            });
+          },
+          borderRadius: BorderRadius.circular(30),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              border:
+                  isSelected
+                      ? null
+                      : Border.all(color: Colors.grey.withOpacity(0.2)),
+            ),
+            child: Text(
               label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildStatsRows(AppProvider provider) {
+    List<Widget> rows = [];
+
+    // Single faces (1-6)
+    if (_selectedFilter == 'All' || _selectedFilter == 'Single') {
+      Map<int, int> faceCount = provider.getFaceCount();
+      for (int i = 1; i <= 6; i++) {
+        rows.add(
+          _buildStatRow(i.toString(), provider.getFrequency(faceCount[i] ?? 0)),
+        );
+      }
+    }
+
+    // Pairs (sorted by value: 11, 12, 13, ..., 66)
+    if (_selectedFilter == 'All' || _selectedFilter == 'Pair') {
+      Map<String, int> pairs = provider.getPairs();
+      List<String> sortedKeys = pairs.keys.toList()..sort();
+      for (String key in sortedKeys) {
+        rows.add(_buildStatRow(key, provider.getFrequency(pairs[key] ?? 0)));
+      }
+    }
+
+    // Triples (sorted by value: 111, 112, ..., 666)
+    if (_selectedFilter == 'All' || _selectedFilter == 'Triple') {
+      Map<String, int> triples = provider.getTriples();
+      List<String> sortedKeys = triples.keys.toList()..sort();
+      for (String key in sortedKeys) {
+        rows.add(_buildStatRow(key, provider.getFrequency(triples[key] ?? 0)));
+      }
+    }
+
+    // Sums (sorted by value: 3, 4, 5, ..., 18)
+    if (_selectedFilter == 'All' || _selectedFilter == 'Sum') {
+      Map<int, int> sums = provider.getSums();
+      List<int> sortedKeys = sums.keys.toList()..sort();
+      for (int key in sortedKeys) {
+        rows.add(
+          _buildStatRow('Sum $key', provider.getFrequency(sums[key] ?? 0)),
+        );
+      }
+    }
+
+    if (rows.isEmpty) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            'No data available',
+            style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return rows;
+  }
+
+  Widget _buildStatRow(String dice, String frequency) {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            // Dice Number/Label
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                dice,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            const Spacer(),
+
+            // Frequency
+            Text(
+              frequency,
               style: const TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF3B82F6),
               ),
             ),
           ],
@@ -420,83 +721,73 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
 
-  Widget _buildAnalysisTab(String label, bool isSelected) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF2E7CF6) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.white60,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
+class DicePainter extends CustomPainter {
+  final int number;
+
+  DicePainter(this.number);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = const Color(0xFFEF4444) // Red dots
+          ..style = PaintingStyle.fill;
+
+    final double dotRadius = size.width * 0.08;
+    final double padding = size.width * 0.25;
+    final double center = size.width / 2;
+
+    // Define dot positions
+    final positions = {
+      'topLeft': Offset(padding, padding),
+      'topRight': Offset(size.width - padding, padding),
+      'center': Offset(center, center),
+      'middleLeft': Offset(padding, center),
+      'middleRight': Offset(size.width - padding, center),
+      'bottomLeft': Offset(padding, size.height - padding),
+      'bottomRight': Offset(size.width - padding, size.height - padding),
+    };
+
+    // Draw dots based on number
+    switch (number) {
+      case 1:
+        canvas.drawCircle(positions['center']!, dotRadius, paint);
+        break;
+      case 2:
+        canvas.drawCircle(positions['topLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomRight']!, dotRadius, paint);
+        break;
+      case 3:
+        canvas.drawCircle(positions['topLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['center']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomRight']!, dotRadius, paint);
+        break;
+      case 4:
+        canvas.drawCircle(positions['topLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['topRight']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomRight']!, dotRadius, paint);
+        break;
+      case 5:
+        canvas.drawCircle(positions['topLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['topRight']!, dotRadius, paint);
+        canvas.drawCircle(positions['center']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomRight']!, dotRadius, paint);
+        break;
+      case 6:
+        canvas.drawCircle(positions['topLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['topRight']!, dotRadius, paint);
+        canvas.drawCircle(positions['middleLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['middleRight']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomLeft']!, dotRadius, paint);
+        canvas.drawCircle(positions['bottomRight']!, dotRadius, paint);
+        break;
+    }
   }
 
-  Widget _buildFrequencyTable() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2E7CF6),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'แต้ม',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'ความถี่',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Dummy data rows for visualization
-          for (var i = 1; i <= 6; i++)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              decoration: BoxDecoration(
-                border: const Border(bottom: BorderSide(color: Colors.white10)),
-                color:
-                    i % 2 == 0
-                        ? Colors.transparent
-                        : Colors.white.withOpacity(0.02),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('$i', style: const TextStyle(color: Colors.white)),
-                  Text(
-                    '${(i * 10 / 7).toStringAsFixed(0)}% (จำลอง)',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  @override
+  bool shouldRepaint(DicePainter oldDelegate) => oldDelegate.number != number;
 }

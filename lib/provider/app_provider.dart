@@ -11,8 +11,6 @@ class AppProvider with ChangeNotifier {
     var db = NumberDB();
     List<Numbers> loadedNumbers = await db.LoadAllData();
     _numbers = loadedNumbers;
-    // Sort logic can go here if needed, for now just load as is.
-    // Usually DB returns in key order (insertion order)
     notifyListeners();
   }
 
@@ -24,19 +22,13 @@ class AppProvider with ChangeNotifier {
     var db = NumberDB();
     int newId = await db.InsertData(number);
 
-    // Create new object with ID to store in local state
     Numbers numberWithId = Numbers(number.value, id: newId);
 
-    _numbers.insert(0, numberWithId); // Insert at top for "newest first" visual
+    _numbers.insert(0, numberWithId);
     notifyListeners();
   }
 
   void removeNumber(int index) async {
-    // index here matches the UI list which might be reversed or not.
-    // However, if we assume _numbers matches UI order (newest first?):
-    // We should be careful.
-    // Let's rely on the method in HistoryItem being passed valid UI index.
-
     Numbers numberToRemove = _numbers[index];
     if (numberToRemove.id != null) {
       var db = NumberDB();
@@ -49,7 +41,6 @@ class AppProvider with ChangeNotifier {
   void updateNumber(int index, Numbers number) async {
     Numbers originalNumber = _numbers[index];
     if (originalNumber.id != null) {
-      // Create updated object preserving the ID
       Numbers updatedNumber = Numbers(number.value, id: originalNumber.id);
 
       var db = NumberDB();
@@ -61,9 +52,6 @@ class AppProvider with ChangeNotifier {
   }
 
   void clearHistory() async {
-    // This requires a "Delete All" method in DB or iterating.
-    // For simplicity, let's iterate deletions or just drop store if DB supports it.
-    // Iterating for now is safest without changing DB interface too much.
     var db = NumberDB();
     for (var n in _numbers) {
       if (n.id != null) {
@@ -72,5 +60,84 @@ class AppProvider with ChangeNotifier {
     }
     _numbers.clear();
     notifyListeners();
+  }
+
+  // Statistics calculation methods
+  Map<int, int> getFaceCount() {
+    Map<int, int> faceCount = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+
+    for (var number in _numbers) {
+      String valueStr = number.value.toString();
+      for (int i = 0; i < valueStr.length; i++) {
+        int digit = int.parse(valueStr[i]);
+        if (digit >= 1 && digit <= 6) {
+          faceCount[digit] = (faceCount[digit] ?? 0) + 1;
+        }
+      }
+    }
+
+    return faceCount;
+  }
+
+  Map<String, int> getPairs() {
+    Map<String, int> pairs = {};
+
+    for (var number in _numbers) {
+      String valueStr = number.value.toString().padLeft(3, '0');
+      if (valueStr.length >= 2) {
+        List<String> digits = valueStr.split('');
+        List<String> sorted = List.from(digits)..sort();
+
+        // Generate all unique pairs
+        Set<String> uniquePairs = {
+          '${sorted[0]}${sorted[1]}',
+          '${sorted[0]}${sorted[2]}',
+          '${sorted[1]}${sorted[2]}',
+        };
+
+        for (var pair in uniquePairs) {
+          pairs[pair] = (pairs[pair] ?? 0) + 1;
+        }
+      }
+    }
+
+    return pairs;
+  }
+
+  Map<String, int> getTriples() {
+    Map<String, int> triples = {};
+
+    for (var number in _numbers) {
+      String valueStr = number.value.toString().padLeft(3, '0');
+      if (valueStr.length >= 3) {
+        List<String> digits = valueStr.split('');
+        List<String> sorted = List.from(digits)..sort();
+        String tripleKey = sorted.join('');
+        triples[tripleKey] = (triples[tripleKey] ?? 0) + 1;
+      }
+    }
+
+    return triples;
+  }
+
+  Map<int, int> getSums() {
+    Map<int, int> sums = {};
+
+    for (var number in _numbers) {
+      String valueStr = number.value.toString();
+      int sum = 0;
+      for (int i = 0; i < valueStr.length; i++) {
+        sum += int.parse(valueStr[i]);
+      }
+      sums[sum] = (sums[sum] ?? 0) + 1;
+    }
+
+    return sums;
+  }
+
+  String getFrequency(int count) {
+    if (_numbers.isEmpty) return '-';
+    double pct = (count / _numbers.length) * 100;
+    return '$count/${_numbers.length} = ${pct.toStringAsFixed(0)}%';
   }
 }

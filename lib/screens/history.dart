@@ -15,7 +15,9 @@ class _MyHistoryState extends State<MyHistory> {
   Widget build(BuildContext context) {
     // Determine overall background color to match main app
     return Scaffold(
-      backgroundColor: const Color(0xFF060B19), // Dark Navy Background
+      backgroundColor: const Color(
+        0xFFF8F9FA,
+      ), // Light background to match Main
       body: SafeArea(
         child: Column(
           children: [
@@ -23,43 +25,53 @@ class _MyHistoryState extends State<MyHistory> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F1623),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Back Button mostly implicit in navigation, but here we can just use the header title
-                      // Or add a specific back button if needed.
-                      // Current design shows "Roll History" centered.
-                      // We'll trust system back swipe or add a leading implementation if requested.
-                      // Adding a tap listener to go back for convenience since there's no explicit back button in the mockup header
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(
-                          Icons.history,
-                          color: Color(0xFF5A9DFF),
+                child: InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Color(0xFFFBFDBFE)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'ประวัติการทอย', // Roll History
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Color(0xFF1D4ED8),
+                          size: 18,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.casino, color: Colors.white70, size: 20),
-                    ],
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Roll History', // Keeping English for consistency or "ประวัติการทอย" as requested before? Keeping Thai as per previous flow if needed but user asked "white mode".
+                          // Let's stick closer to the "Dice Analysis" look which was English. But previous convo had Thai.
+                          // I will use "Roll History" to match "Dice Analysis" English.
+                          style: TextStyle(
+                            color: Color(0xFF1E3A8A),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Image.asset(
+                          'assets/images/dice.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        // const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -69,10 +81,17 @@ class _MyHistoryState extends State<MyHistory> {
             Expanded(
               child: Consumer<AppProvider>(
                 builder: (context, provider, child) {
-                  // Show most recent first? Usually history is reversed.
-                  // Assuming provider.numbers is ordered by insertion (oldest first).
-                  // We likely want newest on top.
+                  // Show most recent first
                   final reversedList = provider.numbers.reversed.toList();
+
+                  if (reversedList.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No historical data available.',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                      ),
+                    );
+                  }
 
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -83,9 +102,7 @@ class _MyHistoryState extends State<MyHistory> {
                       final number = reversedList[index];
 
                       return HistoryItem(
-                        key: ValueKey(
-                          number,
-                        ), // Assuming Number object identity/hash is stable enough or recreating widgets is fine
+                        key: ValueKey(number),
                         number: number,
                         index: originalIndex,
                       );
@@ -163,35 +180,61 @@ class _HistoryItemState extends State<HistoryItem> {
 
   void _confirmDelete() {
     Provider.of<AppProvider>(context, listen: false).removeNumber(widget.index);
-    // Widget will be removed from tree by parent list rebuild
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1623),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              _currentState == ItemState.normal
-                  ? const Color(0xFF1E2738)
-                  : (_currentState == ItemState.delete
-                      ? Colors.redAccent.withOpacity(0.5)
-                      : const Color(0xFF2E7CF6).withOpacity(0.5)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color:
+                  _currentState == ItemState.delete
+                      ? Color(0xFFFEF2F2)
+                      : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    _currentState == ItemState.delete
+                        ? Colors.red.withOpacity(0.5)
+                        : Colors.grey.withOpacity(0.3),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: _buildContent(),
           ),
+          if (_currentState != ItemState.delete)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 6,
+                decoration: BoxDecoration(
+                  color:
+                      widget.number.value > 10
+                          ? const Color(0xFF3B82F6) // Blue for HI
+                          : const Color(0xFFEF4444), // Red for LO
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    bottomLeft: Radius.circular(30),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
-      child: _buildContent(),
     );
+
   }
 
   Widget _buildContent() {
@@ -200,16 +243,17 @@ class _HistoryItemState extends State<HistoryItem> {
         return Row(
           children: [
             Container(
-              width: 60,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              width: 80,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF2E7CF6)),
+                border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
                 borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFEFF6FF),
               ),
               child: TextField(
                 controller: _editController,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFF1E293B),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -225,12 +269,17 @@ class _HistoryItemState extends State<HistoryItem> {
             ),
             const Spacer(),
             _buildSmallButton(
-              'บันทึก',
-              const Color(0xFF2E7CF6),
+              'Save',
+              const Color(0xFF3B82F6),
               _saveEdit,
             ), // Save
             const SizedBox(width: 8),
-            _buildSmallButton('ยกเลิก', Colors.grey, _cancelAction), // Cancel
+            _buildSmallButton(
+              'Cancel',
+              const Color(0xFFE2E8F0),
+              _cancelAction,
+              textColor: const Color.fromARGB(255, 37, 37, 37),
+            ),
           ],
         );
 
@@ -240,33 +289,43 @@ class _HistoryItemState extends State<HistoryItem> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.2),
+                  width: 1,
+                ),
+                color: const Color(0xFFFEE2E2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.redAccent,
-                size: 24,
+              child: Center(
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 20,
+                ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'ลบรายการ ${widget.number.value.toString().padLeft(3, '0')}?',
+                    'Delete Entry ${widget.number.value}?',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF1E293B),
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'ไม่สามารถย้อนกลับได้',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  const SizedBox(height: 2),
+                  Text(
+                    'This action cannot be undone.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -276,17 +335,17 @@ class _HistoryItemState extends State<HistoryItem> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSmallButton(
-                  'ลบ',
-                  const Color(0xFFDC2626), // Red 600
+                  'Delete',
+                  const Color(0xFFEF4444),
                   _confirmDelete,
                 ),
                 const SizedBox(width: 8),
                 _buildSmallButton(
-                  'ยกเลิก',
-                  Colors.transparent,
+                  'Cancel',
+                  Colors.white,
                   _cancelAction,
-                  textColor: Colors.white70,
-                  borderColor: Colors.white24,
+                  textColor: const Color.fromARGB(255, 37, 37, 37),
+                  borderColor: const Color(0xFFCBD5E1),
                 ),
               ],
             ),
@@ -295,63 +354,79 @@ class _HistoryItemState extends State<HistoryItem> {
 
       case ItemState.normal:
         final val = widget.number.value;
-        final isHigh = val > 10; // Simple HI/LO logic
-        // 11-18 = High (Hi), 3-10 = Low (Lo) based on typical Sic Bo rules
-        // Assuming user just inputs Sum. If input is 1-6 multiple times, logic differs.
-        // Based on "012", "003", seems to be Sum input or single dice?
-        // 0-999?
-        // Let's stick to simple > 10 is HI for now.
+        final isHigh = val > 10;
 
         return Row(
           children: [
             Text(
-              val.toString().padLeft(3, '0'),
+              val.toString().padLeft(3, '0'), // 001, 123
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
+                color: Color(0xFF1E293B),
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
-                // specialized font usually looks good for numbers
+                letterSpacing: 2,
               ),
             ),
             const SizedBox(width: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: (isHigh
-                        ? const Color(0xFF1E3A8A)
-                        : const Color(0xFF450A0A))
-                    .withOpacity(0.5),
+                color:
+                    (isHigh
+                        ? const Color(0xFFDBEAFE) // Light Blue
+                        : const Color(0xFFFFE4E6)), // Light Red
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color:
                       isHigh
-                          ? const Color(0xFF3B82F6)
-                          : const Color(0xFFEF4444),
+                          ? const Color(0xFF93C5FD)
+                          : const Color(0xFFFDA4AF),
                   width: 1,
                 ),
               ),
               child: Text(
-                isHigh ? 'HI' : 'LO', // สูง / ต่ำ
+                isHigh ? 'HI' : 'LO',
                 style: TextStyle(
                   color:
                       isHigh
-                          ? const Color(0xFF60A5FA)
-                          : const Color(0xFFF87171),
-                  fontSize: 10,
+                          ? const Color(0xFF1D4ED8)
+                          : const Color(0xFFBE123C),
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
-              onPressed: _startEdit,
-              splashRadius: 20,
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  size: 20,
+                  color: Color(0xFF6B7280),
+                ),
+                onPressed: _startEdit,
+                splashRadius: 20,
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, size: 18, color: Colors.grey),
-              onPressed: _requestDelete,
-              splashRadius: 20,
+            const SizedBox(width: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 20,
+                  color: Color(0xFF6B7280),
+                ),
+                onPressed: _requestDelete,
+                splashRadius: 20,
+              ),
             ),
           ],
         );
@@ -368,10 +443,10 @@ class _HistoryItemState extends State<HistoryItem> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(20),
           border: borderColor != null ? Border.all(color: borderColor) : null,
         ),
         child: Text(
@@ -379,7 +454,7 @@ class _HistoryItemState extends State<HistoryItem> {
           style: TextStyle(
             color: textColor ?? Colors.white,
             fontSize: 12,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
