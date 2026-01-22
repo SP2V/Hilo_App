@@ -50,6 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final formKey = GlobalKey<FormState>();
   final _numberController = TextEditingController();
   String _selectedFilter = 'All'; // Track selected filter
+  bool _sortByFrequency = false; // Track sort state
 
   @override
   void initState() {
@@ -63,19 +64,129 @@ class _MyHomePageState extends State<MyHomePage> {
       var provider = Provider.of<AppProvider>(context, listen: false);
       provider.addNumber(Numbers(int.parse(number)));
       _numberController.clear();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณากรอกข้อมูลก่อนบันทึก'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
-  void _resetHistory() {
-    Provider.of<AppProvider>(context, listen: false).clearHistory();
+  void _resetHistory() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE5E5),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.red.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 40,
+                    color: Color(0xFFEF4444),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Title
+                const Text(
+                  'Reset?',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Description
+                const Text(
+                  'Are you sure you want to clear all\nhistory? This action cannot be undone',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF94A3B8),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color(0xFFEF4444),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      Provider.of<AppProvider>(context, listen: false).clearHistory();
+    }
   }
 
   void _navigateToHistory() {
@@ -148,7 +259,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       provider.numbers.isNotEmpty
                           ? provider.numbers.first.value
                               .toString() // Assuming list is ordered new first
-                          : '-';
+                          : '---';
                   final count = provider.numbers.length;
 
                   return Row(
@@ -208,7 +319,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     filled: true,
                     fillColor: const Color(0xFFF1F5F9), // Light grey background
-                    hintText: '',
+                    hintText: 'Each digit is between 1-6',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.only(right: 20),
                       child: Align(
@@ -262,10 +378,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please specify the number.';
+                      return 'Please enter a number';
                     }
-                    if (int.tryParse(value) == null) {
-                      return 'The number is invalid.';
+                    if (value.length != 3) {
+                      return 'Please enter a 3-digit number';
+                    }
+                    // Check if all digits are between 1-6
+                    for (int i = 0; i < value.length; i++) {
+                      int digit = int.tryParse(value[i]) ?? 0;
+                      if (digit < 1 || digit > 6) {
+                        return 'Each digit must be between 1 and 6';
+                      }
                     }
                     return null;
                   },
@@ -335,7 +458,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     flex: 3,
                     child: OutlinedButton.icon(
-                      onPressed: _navigateToHistory,
+                      // onPressed: _navigateToHistory,
+                      onPressed: _MyHomePageState.new,
                       icon: const Icon(
                         Icons.history,
                         size: 18,
@@ -386,6 +510,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -406,24 +534,39 @@ class _MyHomePageState extends State<MyHomePage> {
                                   letterSpacing: 1,
                                 ),
                               ),
-                              Row(
-                                children: const [
-                                  Text(
-                                    'FREQUENCY',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF64748B),
-                                      letterSpacing: 1,
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _sortByFrequency = !_sortByFrequency;
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'FREQUENCY',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            _sortByFrequency
+                                                ? const Color(0xFF3B82F6)
+                                                : const Color(0xFF64748B),
+                                        letterSpacing: 1,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Icon(
-                                    Icons.unfold_more,
-                                    size: 16,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                ],
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _sortByFrequency
+                                          ? Icons.expand_more
+                                          : Icons.unfold_more,
+                                      size: 16,
+                                      color:
+                                          _sortByFrequency
+                                              ? const Color(0xFF3B82F6)
+                                              : const Color(0xFF64748B),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -625,13 +768,20 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _buildStatsRows(AppProvider provider) {
     List<Widget> rows = [];
 
+    // Collect items separately for each category
+    List<MapEntry<String, int>> singleItems = [];
+    List<MapEntry<String, int>> pairItems = [];
+    List<MapEntry<String, int>> tripleItems = [];
+    List<MapEntry<String, int>> sumItems = [];
+
     // Single faces (1-6)
     if (_selectedFilter == 'All' || _selectedFilter == 'Single') {
       Map<int, int> faceCount = provider.getFaceCount();
       for (int i = 1; i <= 6; i++) {
-        rows.add(
-          _buildStatRow(i.toString(), provider.getFrequency(faceCount[i] ?? 0)),
-        );
+        int count = faceCount[i] ?? 0;
+        if (count > 0) {
+          singleItems.add(MapEntry(i.toString(), count));
+        }
       }
     }
 
@@ -640,7 +790,12 @@ class _MyHomePageState extends State<MyHomePage> {
       Map<String, int> pairs = provider.getPairs();
       List<String> sortedKeys = pairs.keys.toList()..sort();
       for (String key in sortedKeys) {
-        rows.add(_buildStatRow(key, provider.getFrequency(pairs[key] ?? 0)));
+        int count = pairs[key] ?? 0;
+        if (count > 0) {
+          // Format with comma: "12" -> "1,2"
+          String formattedKey = key.split('').join(',');
+          pairItems.add(MapEntry(formattedKey, count));
+        }
       }
     }
 
@@ -649,7 +804,12 @@ class _MyHomePageState extends State<MyHomePage> {
       Map<String, int> triples = provider.getTriples();
       List<String> sortedKeys = triples.keys.toList()..sort();
       for (String key in sortedKeys) {
-        rows.add(_buildStatRow(key, provider.getFrequency(triples[key] ?? 0)));
+        int count = triples[key] ?? 0;
+        if (count > 0) {
+          // Format with comma: "123" -> "1,2,3"
+          String formattedKey = key.split('').join(',');
+          tripleItems.add(MapEntry(formattedKey, count));
+        }
       }
     }
 
@@ -658,16 +818,39 @@ class _MyHomePageState extends State<MyHomePage> {
       Map<int, int> sums = provider.getSums();
       List<int> sortedKeys = sums.keys.toList()..sort();
       for (int key in sortedKeys) {
-        rows.add(
-          _buildStatRow('Sum $key', provider.getFrequency(sums[key] ?? 0)),
-        );
+        int count = sums[key] ?? 0;
+        if (count > 0) {
+          sumItems.add(MapEntry('Sum $key', count));
+        }
       }
+    }
+
+    // Sort each category by frequency if enabled
+    if (_sortByFrequency) {
+      singleItems.sort((a, b) => b.value.compareTo(a.value));
+      pairItems.sort((a, b) => b.value.compareTo(a.value));
+      tripleItems.sort((a, b) => b.value.compareTo(a.value));
+      sumItems.sort((a, b) => b.value.compareTo(a.value));
+    }
+
+    // Build rows from each category in order
+    for (var item in singleItems) {
+      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    }
+    for (var item in pairItems) {
+      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    }
+    for (var item in tripleItems) {
+      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    }
+    for (var item in sumItems) {
+      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
     }
 
     if (rows.isEmpty) {
       rows.add(
         Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.symmetric(vertical: 90,horizontal: 132),
           child: Text(
             'No data available',
             style: TextStyle(color: Colors.grey[400], fontSize: 14),

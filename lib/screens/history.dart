@@ -13,106 +13,148 @@ class MyHistory extends StatefulWidget {
 class _MyHistoryState extends State<MyHistory> {
   @override
   Widget build(BuildContext context) {
-    // Determine overall background color to match main app
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF8F9FA,
-      ), // Light background to match Main
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Color(0xFFFBFDBFE)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Color(0xFF1D4ED8),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Roll History', // Keeping English for consistency or "ประวัติการทอย" as requested before? Keeping Thai as per previous flow if needed but user asked "white mode".
-                          // Let's stick closer to the "Dice Analysis" look which was English. But previous convo had Thai.
-                          // I will use "Roll History" to match "Dice Analysis" English.
-                          style: TextStyle(
-                            color: Color(0xFF1E3A8A),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Image.asset(
-                          'assets/images/dice.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        // const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
-                      ],
-                    ),
-                  ),
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: Stack(
+        children: [
+          // Top-left gradient
+          Positioned(
+            top: -50,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFBFDBFE).withOpacity(0.6),
+                    const Color(0xFFBFDBFE).withOpacity(0.0),
+                  ],
                 ),
               ),
             ),
-
-            // List
-            Expanded(
-              child: Consumer<AppProvider>(
-                builder: (context, provider, child) {
-                  // Show most recent first
-                  final reversedList = provider.numbers.reversed.toList();
-
-                  if (reversedList.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No historical data available.',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 16),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: reversedList.length,
-                    itemBuilder: (context, index) {
-                      // Calculate actual index in original list for updates/deletes
-                      final originalIndex = provider.numbers.length - 1 - index;
-                      final number = reversedList[index];
-
-                      return HistoryItem(
-                        key: ValueKey(number),
-                        number: number,
-                        index: originalIndex,
-                      );
-                    },
-                  );
-                },
+          ),
+          // Bottom-right gradient
+          Positioned(
+            bottom: -80,
+            right: -80,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFBFDBFE).withOpacity(0.6),
+                    const Color(0xFFBFDBFE).withOpacity(0.0),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFBFDBFE).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Color.fromARGB(255, 154, 187, 228).withOpacity(1)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.arrow_back_ios_new,
+                              color: Color(0xFF1D4ED8),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Roll History', // Keeping English for consistency or "ประวัติการทอย" as requested before? Keeping Thai as per previous flow if needed but user asked "white mode".
+                              // Let's stick closer to the "Dice Analysis" look which was English. But previous convo had Thai.
+                              // I will use "Roll History" to match "Dice Analysis" English.
+                              style: TextStyle(
+                                color: Color(0xFF1E3A8A),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Image.asset(
+                              'assets/images/dice.png',
+                              width: 20,
+                              height: 20,
+                            ),
+                            // const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // List
+                Expanded(
+                  child: Consumer<AppProvider>(
+                    builder: (context, provider, child) {
+                      // Show most recent first
+                      final reversedList = provider.numbers.reversed.toList();
+
+                      if (reversedList.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No historical data available.',
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 16,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: reversedList.length,
+                        itemBuilder: (context, index) {
+                          // Calculate actual index in original list for updates/deletes
+                          final originalIndex =
+                              provider.numbers.length - 1 - index;
+                          final number = reversedList[index];
+
+                          return HistoryItem(
+                            key: ValueKey(number),
+                            number: number,
+                            index: originalIndex,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -182,6 +224,16 @@ class _HistoryItemState extends State<HistoryItem> {
     Provider.of<AppProvider>(context, listen: false).removeNumber(widget.index);
   }
 
+  // Calculate sum of three dice digits
+  int _calculateDiceSum(int value) {
+    String valueStr = value.toString().padLeft(3, '0');
+    int sum = 0;
+    for (int i = 0; i < valueStr.length && i < 3; i++) {
+      sum += int.parse(valueStr[i]);
+    }
+    return sum;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -215,13 +267,13 @@ class _HistoryItemState extends State<HistoryItem> {
           if (_currentState != ItemState.delete)
             Positioned(
               left: 0,
-              top: 0,
-              bottom: 0,
+              top: 2,
+              bottom: 2,
               child: Container(
-                width: 6,
+                width: 5.5,
                 decoration: BoxDecoration(
                   color:
-                      widget.number.value > 10
+                      _calculateDiceSum(widget.number.value) >= 11
                           ? const Color(0xFF3B82F6) // Blue for HI
                           : const Color(0xFFEF4444), // Red for LO
                   borderRadius: const BorderRadius.only(
@@ -234,7 +286,6 @@ class _HistoryItemState extends State<HistoryItem> {
         ],
       ),
     );
-
   }
 
   Widget _buildContent() {
@@ -354,7 +405,8 @@ class _HistoryItemState extends State<HistoryItem> {
 
       case ItemState.normal:
         final val = widget.number.value;
-        final isHigh = val > 10;
+        final sum = _calculateDiceSum(val);
+        final isHigh = sum >= 11;
 
         return Row(
           children: [
