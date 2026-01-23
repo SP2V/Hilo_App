@@ -233,7 +233,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAEFF5), // Light grey/blue ish
+                  image: DecorationImage(
+                    // image: AssetImage('assets/images/bg_card.jpg'),
+                    image: AssetImage('assets/images/bg.png'),
+                    fit: BoxFit.cover,
+                  ),
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,6 +256,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1E293B),
+                        // color: Color(0xFFFFFFFF),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -252,6 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
+                        // color: Colors.white,
                         height: 1.4,
                       ),
                     ),
@@ -306,123 +320,128 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const SizedBox(height: 8),
 
-              Form(
-                key: formKey,
-                child: TextFormField(
-                  controller: _numberController,
-                  keyboardType: TextInputType.number,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(3),
-                    FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
-                  ],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                  textAlign:
-                      TextAlign
-                          .center, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
-                  // Let's assume left input, icon right.
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 18,
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFFF1F5F9), // Light grey background
-                    hintText: 'Enter a 3-digit number (1–6 only)',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        widthFactor: 1.0,
-                        child: Text(
-                          '123',
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFCBD5E1), // Grey border
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFCBD5E1), // Grey border
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3B82F6),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFEF4444),
-                        width: 1.5,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFEF4444),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return _attemptedSubmit ? 'Please enter a number' : null;
-                    }
-                    if (value.length != 3) {
-                      return 'Please enter a 3-digit number';
-                    }
-                    // Check if all digits are between 1-6
-                    for (int i = 0; i < value.length; i++) {
-                      int digit = int.tryParse(value[i]) ?? 0;
-                      if (digit < 1 || digit > 6) {
-                        return 'Each digit must be between 1 and 6';
-                      }
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _submitNumber(),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Buttons Row
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 10,
+                    child: Form(
+                      key: formKey,
+                      child: TextFormField(
+                        controller: _numberController,
+                        keyboardType: TextInputType.number,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(3),
+                          FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
+                        ],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                        textAlign:
+                            TextAlign
+                                .center, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
+                        // Let's assume left input, icon right.
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 17,
+                          ),
+                          filled: true,
+                          fillColor: const Color(
+                            0xFFF1F5F9,
+                          ), // Light grey background
+                          hintText: 'Enter a number from 1 to 6',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                          ),
+                          // suffixIcon: Padding(
+                          //   padding: const EdgeInsets.only(right: 20),
+                          //   child: Align(
+                          //     alignment: Alignment.centerRight,
+                          //     widthFactor: 1.0,
+                          //     child: Text(
+                          //       '1 to 6',
+                          //       style: TextStyle(
+                          //         color: Colors.grey[400],
+                          //         fontWeight: FontWeight.w500,
+                          //         fontSize: 14,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1), // Grey border
+                              width: 1,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1), // Grey border
+                              width: 1,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF3B82F6),
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEF4444),
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEF4444),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return _attemptedSubmit
+                                ? 'Please enter a number'
+                                : null;
+                          }
+                          if (value.length != 3) {
+                            return 'Please enter a 3-digit number';
+                          }
+                          // Check if all digits are between 1-6
+                          for (int i = 0; i < value.length; i++) {
+                            int digit = int.tryParse(value[i]) ?? 0;
+                            if (digit < 1 || digit > 6) {
+                              return 'Each digit must be between 1 and 6';
+                            }
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => _submitNumber(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    flex: 5,
                     child: ElevatedButton.icon(
                       onPressed: _submitNumber,
-                      icon: const Icon(
-                        Icons.check,
-                        size: 18,
-                        color: Colors.white,
-                      ),
+                      // icon: const Icon(
+                      //   Icons.check,
+                      //   size: 18,
+                      //   color: Colors.white,
+                      // ),
                       label: const Text(
                         'Enter',
                         style: TextStyle(
@@ -432,15 +451,28 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3B82F6), // Blue
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 18,
+                        ),
+                        side: const BorderSide(
+                          color: Color(0xFF3B82F6),
+                          width: 2,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         elevation: 0,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Buttons Row
+              Row(
+                children: [
                   Expanded(
                     flex: 3,
                     child: ElevatedButton.icon(
@@ -458,11 +490,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEF2F2), // Light Red
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          255,
+                          244,
+                          244,
+                        ), // Light Red
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         side: const BorderSide(
                           color: Color(0xFFEF4444),
-                          width: 1,
+                          width: 1.5,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -489,9 +526,13 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF3B82F6)),
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(
+                          color: Color(0xFF3B82F6),
+                          width: 1.5,
+                        ),
+                        // backgroundColor: Colors.white,
+                        backgroundColor: Color.fromARGB(255, 244, 248, 255),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -870,7 +911,7 @@ class _MyHomePageState extends State<MyHomePage> {
           provider.getFrequency(item.value),
           categoryLabel:
               i == 0
-                  ? '(Double)'
+                  ? '(Pair)'
                   : null, // User asked for Double likely, or Pair? Request said "Double"
         ), // Actually user request image showed (Single). User text said "เหมือนในรูปนี้" (like in this picture).
         // The plan said "(Double)" for pairs. I will stick to "(Double)" as it pairs with "Single".

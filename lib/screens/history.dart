@@ -125,10 +125,8 @@ class _MyHistoryState extends State<MyHistory> {
                 Expanded(
                   child: Consumer<AppProvider>(
                     builder: (context, provider, child) {
-                      // Show most recent first
-                      final reversedList = provider.numbers.reversed.toList();
-
-                      if (reversedList.isEmpty) {
+                      // Data is already sorted newest first from database
+                      if (provider.numbers.isEmpty) {
                         return Center(
                           child: Text(
                             'No historical data available.',
@@ -140,21 +138,33 @@ class _MyHistoryState extends State<MyHistory> {
                         );
                       }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: reversedList.length,
-                        itemBuilder: (context, index) {
-                          // Calculate actual index in original list for updates/deletes
-                          final originalIndex =
-                              provider.numbers.length - 1 - index;
-                          final number = reversedList[index];
-
-                          return HistoryItem(
-                            key: ValueKey(number),
-                            number: number,
-                            index: originalIndex,
-                          );
+                      return ShaderMask(
+                        shaderCallback: (Rect bounds) {
+                          return LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white,
+                              Colors.white,
+                              Colors.white.withOpacity(0.0),
+                            ],
+                            stops: const [0.0, 0.85, 1.0],
+                          ).createShader(bounds);
                         },
+                        blendMode: BlendMode.dstIn,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: provider.numbers.length,
+                          itemBuilder: (context, index) {
+                            final number = provider.numbers[index];
+
+                            return HistoryItem(
+                              key: ValueKey(number),
+                              number: number,
+                              index: index,
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -259,17 +269,90 @@ class _HistoryItemState extends State<HistoryItem> {
   }
 
   void _saveEdit() {
-    final newValue = int.tryParse(_editController.text);
-    if (newValue != null) {
-      Provider.of<AppProvider>(
-        context,
-        listen: false,
-      ).updateNumber(widget.index, Numbers(newValue));
-      setState(() {
-        _currentState = ItemState.normal;
-      });
-      _showToast('Saved successfully');
+    final text = _editController.text.trim();
+    final newValue = int.tryParse(text);
+
+    // Validate: must have exactly 3 digits and all digits must be 1-6
+    if (newValue == null) {
+      _showErrorToast('Please enter a valid number');
+      return;
     }
+
+    if (text.length != 3) {
+      _showErrorToast('Number must have exactly 3 digits');
+      return;
+    }
+
+    // Check if all digits are between 1-6
+    for (int i = 0; i < text.length; i++) {
+      int digit = int.parse(text[i]);
+      if (digit < 1 || digit > 6) {
+        _showErrorToast('All digits must be between 1-6');
+        return;
+      }
+    }
+
+    Provider.of<AppProvider>(
+      context,
+      listen: false,
+    ).updateNumber(widget.index, Numbers(newValue));
+    setState(() {
+      _currentState = ItemState.normal;
+    });
+    _showToast('Saved successfully');
+  }
+
+  void _showErrorToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444), // Red
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.error_outline,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   void _requestDelete() {

@@ -2,6 +2,7 @@ import 'package:hilo/models/number.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
 class NumberDB {
@@ -34,10 +35,12 @@ class NumberDB {
     return await _customStore.add(dbClient, {'value': number.value});
   }
 
-  // Load all data
+  // Load all data (sorted by ID descending - newest saved first)
   Future<List<Numbers>> LoadAllData() async {
     final dbClient = await database;
-    final records = await _customStore.find(dbClient);
+    // Sort by key descending so newest records (highest IDs) come first
+    final finder = Finder(sortOrders: [SortOrder(Field.key, false)]);
+    final records = await _customStore.find(dbClient, finder: finder);
 
     return records.map((snapshot) {
       return Numbers(snapshot.value['value'] as int, id: snapshot.key);
