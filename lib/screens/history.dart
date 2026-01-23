@@ -138,34 +138,48 @@ class _MyHistoryState extends State<MyHistory> {
                         );
                       }
 
-                      return ShaderMask(
-                        shaderCallback: (Rect bounds) {
-                          return LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white,
-                              Colors.white,
-                              Colors.white.withOpacity(0.0),
-                            ],
-                            stops: const [0.0, 0.85, 1.0],
-                          ).createShader(bounds);
-                        },
-                        blendMode: BlendMode.dstIn,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: provider.numbers.length,
-                          itemBuilder: (context, index) {
-                            final number = provider.numbers[index];
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: provider.numbers.length,
+                        itemBuilder: (context, index) {
+                          final number = provider.numbers[index];
 
-                            return HistoryItem(
-                              key: ValueKey(number),
-                              number: number,
-                              index: index,
-                            );
-                          },
-                        ),
+                          return HistoryItem(
+                            key: ValueKey(number),
+                            number: number,
+                            index: index,
+                          );
+                        },
                       );
+
+                      // return ShaderMask(
+                      //   shaderCallback: (Rect bounds) {
+                      //     return LinearGradient(
+                      //       begin: Alignment.topCenter,
+                      //       end: Alignment.bottomCenter,
+                      //       colors: [
+                      //         Colors.white,
+                      //         Colors.white,
+                      //         Colors.white.withOpacity(0.0),
+                      //       ],
+                      //       stops: const [0.0, 0.85, 1.0],
+                      //     ).createShader(bounds);
+                      //   },
+                      //   blendMode: BlendMode.dstIn,
+                      //   child: ListView.builder(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                      //     itemCount: provider.numbers.length,
+                      //     itemBuilder: (context, index) {
+                      //       final number = provider.numbers[index];
+
+                      //       return HistoryItem(
+                      //         key: ValueKey(number),
+                      //         number: number,
+                      //         index: index,
+                      //       );
+                      //     },
+                      //   ),
+                      // );
                     },
                   ),
                 ),
