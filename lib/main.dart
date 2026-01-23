@@ -314,7 +314,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   inputFormatters: [
                     LengthLimitingTextInputFormatter(3),
-                    FilteringTextInputFormatter.digitsOnly,
+                    FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
                   ],
                   style: const TextStyle(
                     fontSize: 16,
@@ -332,7 +332,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     filled: true,
                     fillColor: const Color(0xFFF1F5F9), // Light grey background
-                    hintText: 'Please enter a 3-digit number',
+                    hintText: 'Enter a 3-digit number (1–6 only)',
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 14,
