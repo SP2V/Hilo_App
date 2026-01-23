@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hilo/models/number.dart';
 import 'package:hilo/screens/history.dart';
 import 'package:provider/provider.dart';
@@ -51,6 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _numberController = TextEditingController();
   String _selectedFilter = 'All'; // Track selected filter
   bool _sortByFrequency = false; // Track sort state
+  bool _attemptedSubmit = false;
 
   @override
   void initState() {
@@ -59,11 +61,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _submitNumber() {
+    setState(() {
+      _attemptedSubmit = true;
+    });
     if (formKey.currentState!.validate()) {
       var number = _numberController.text;
       var provider = Provider.of<AppProvider>(context, listen: false);
       provider.addNumber(Numbers(int.parse(number)));
       _numberController.clear();
+      setState(() {
+        _attemptedSubmit = false;
+      });
     }
   }
 
@@ -303,6 +311,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: TextFormField(
                   controller: _numberController,
                   keyboardType: TextInputType.number,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(3),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -310,7 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   textAlign:
                       TextAlign
-                          .left, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
+                          .center, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
                   // Let's assume left input, icon right.
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
@@ -319,7 +332,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     filled: true,
                     fillColor: const Color(0xFFF1F5F9), // Light grey background
-                    hintText: 'Each digit is between 1-6',
+                    hintText: 'Please enter a 3-digit number',
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 14,
@@ -378,7 +391,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a number';
+                      return _attemptedSubmit ? 'Please enter a number' : null;
                     }
                     if (value.length != 3) {
                       return 'Please enter a 3-digit number';
@@ -447,6 +460,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFEF2F2), // Light Red
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(
+                          color: Color(0xFFEF4444),
+                          width: 1,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -458,8 +475,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     flex: 3,
                     child: OutlinedButton.icon(
-                      // onPressed: _navigateToHistory,
-                      onPressed: _MyHomePageState.new,
+                      onPressed: _navigateToHistory,
                       icon: const Icon(
                         Icons.history,
                         size: 18,
@@ -473,7 +489,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        side: const BorderSide(color: Color(0xFF3B82F6)),
                         backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -518,9 +534,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                          padding: const EdgeInsets.only(
+                            top: 12,
+                            bottom: 12,
+                            left: 24,
+                            right: 12,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -604,7 +622,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String? unit,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -656,15 +674,15 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Show dice for CURRENT RESULT inline
-              if (title == 'CURRENT RESULT' && value != '-') ...[
-                ..._buildDiceRow(value),
-                const SizedBox(width: 15),
-              ],
 
+              // if (title == 'CURRENT RESULT' && value != '-') ...[
+              //   // ..._buildDiceRow(value),
+              //   const SizedBox(width: 15),
+              // ],
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color:
                       isHighlight
@@ -834,23 +852,77 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     // Build rows from each category in order
-    for (var item in singleItems) {
-      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    for (int i = 0; i < singleItems.length; i++) {
+      final item = singleItems[i];
+      rows.add(
+        _buildStatRow(
+          item.key,
+          provider.getFrequency(item.value),
+          categoryLabel: i == 0 ? '(Single)' : null,
+        ),
+      );
     }
-    for (var item in pairItems) {
-      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    for (int i = 0; i < pairItems.length; i++) {
+      final item = pairItems[i];
+      rows.add(
+        _buildStatRow(
+          item.key,
+          provider.getFrequency(item.value),
+          categoryLabel:
+              i == 0
+                  ? '(Double)'
+                  : null, // User asked for Double likely, or Pair? Request said "Double"
+        ), // Actually user request image showed (Single). User text said "เหมือนในรูปนี้" (like in this picture).
+        // The plan said "(Double)" for pairs. I will stick to "(Double)" as it pairs with "Single".
+      );
     }
-    for (var item in tripleItems) {
-      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    for (int i = 0; i < tripleItems.length; i++) {
+      final item = tripleItems[i];
+      rows.add(
+        _buildStatRow(
+          item.key,
+          provider.getFrequency(item.value),
+          categoryLabel: i == 0 ? '(Triple)' : null,
+        ),
+      );
     }
-    for (var item in sumItems) {
-      rows.add(_buildStatRow(item.key, provider.getFrequency(item.value)));
+    for (int i = 0; i < sumItems.length; i++) {
+      final item = sumItems[i];
+      rows.add(
+        _buildStatRow(
+          item.key,
+          provider.getFrequency(item.value),
+          // Sum usually doesn't need "(Sum)" if the key is "Sum 10".
+          // But if the key is just the number, we might need it.
+          // Looking at previous code: sumItems.add(MapEntry('Sum $key', count));
+          // So the key already contains "Sum".
+          // However, the user said "แยกประเภทของแต่ละอันให้หน่อย" (Separate types for each one).
+          // If the key is "Sum 10", it already says Sum.
+          // But to be consistent with "Single", "Double", "Triple", we might not need an extra label for Sum if the item itself says "Sum".
+          // Let's check the previous code for single items. keys are "1", "2".
+          // Pair keys are "1,2".
+          // Triple keys are "1,1,1".
+          // Sum keys are "Sum 4".
+          // So Sum is already labeled. I will NOT add an extra "(Sum)" label to avoid redundancy like "Sum 4 (Sum)".
+          // OR, maybe the user wants it.
+          // Let's look at the request: "ให้มีข้อความข้างหลังตัวเลขเพื่อแยกประเภทของแต่ละอันให้หน่อยใส่แค่ตัวแรกของแต่ละประเภทเท่านั้น"
+          // "Have text behind the number to distinguish the type of each one, put only on the first of each type".
+          // If 'Sum 4' is the text, it already distinguishes.
+          // But 'Single' (1) and 'Pair' (1,1) don't explicitly say "Pair".
+          // So Single, Double, Triple are needed. Sum is redundant but maybe consistent?
+          // I'll skip Sum label since the key has it.
+          // Wait, if I look at the screenshot, it has (Single).
+          // I'll add categories for Single, Double (Pair), Triple.
+          // Sum items already have "Sum" in the key string.
+          categoryLabel: i == 0 ? '(Sum)' : null,
+        ),
+      );
     }
 
     if (rows.isEmpty) {
       rows.add(
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 90,horizontal: 132),
+          padding: const EdgeInsets.symmetric(vertical: 90, horizontal: 132),
           child: Text(
             'No data available',
             style: TextStyle(color: Colors.grey[400], fontSize: 14),
@@ -863,13 +935,18 @@ class _MyHomePageState extends State<MyHomePage> {
     return rows;
   }
 
-  Widget _buildStatRow(String dice, String frequency) {
+  Widget _buildStatRow(String dice, String frequency, {String? categoryLabel}) {
     return Container(
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.only(
+          top: 16,
+          bottom: 16,
+          left: 24,
+          right: 32,
+        ),
         child: Row(
           children: [
             // Dice Number/Label
@@ -888,6 +965,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+            if (categoryLabel != null) ...[
+              const SizedBox(width: 12),
+              Text(
+                categoryLabel,
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
             const Spacer(),
 
             // Frequency

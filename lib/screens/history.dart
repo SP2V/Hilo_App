@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:hilo/provider/app_provider.dart';
 import 'package:hilo/models/number.dart';
@@ -71,7 +72,14 @@ class _MyHistoryState extends State<MyHistory> {
                         decoration: BoxDecoration(
                           color: Color(0xFFBFDBFE).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Color.fromARGB(255, 154, 187, 228).withOpacity(1)),
+                          border: Border.all(
+                            color: Color.fromARGB(
+                              255,
+                              154,
+                              187,
+                              228,
+                            ).withOpacity(1),
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -201,6 +209,55 @@ class _HistoryItemState extends State<HistoryItem> {
     });
   }
 
+  void _showToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22C55E), // Green
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.check, size: 20, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   void _saveEdit() {
     final newValue = int.tryParse(_editController.text);
     if (newValue != null) {
@@ -211,6 +268,7 @@ class _HistoryItemState extends State<HistoryItem> {
       setState(() {
         _currentState = ItemState.normal;
       });
+      _showToast('Saved successfully');
     }
   }
 
@@ -221,7 +279,59 @@ class _HistoryItemState extends State<HistoryItem> {
   }
 
   void _confirmDelete() {
-    Provider.of<AppProvider>(context, listen: false).removeNumber(widget.index);
+    final provider = Provider.of<AppProvider>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Remove the number
+    provider.removeNumber(widget.index);
+
+    // Show toast
+    messenger.showSnackBar(
+      SnackBar(
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22C55E), // Green
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.check, size: 20, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Deleted successfully',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   // Calculate sum of three dice digits
@@ -309,6 +419,10 @@ class _HistoryItemState extends State<HistoryItem> {
                   fontWeight: FontWeight.bold,
                 ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(3),
+                  FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
+                ],
                 textAlign: TextAlign.center,
                 decoration: const InputDecoration(
                   isDense: true,
