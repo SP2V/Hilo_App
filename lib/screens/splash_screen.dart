@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  width: 150,
+                  width: 96,
                   height: 4,
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.2), // Track color
