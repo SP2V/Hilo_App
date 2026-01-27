@@ -4,6 +4,7 @@ import 'package:hilo/models/number.dart';
 import 'package:hilo/screens/history.dart';
 import 'package:provider/provider.dart';
 import 'package:hilo/provider/app_provider.dart';
+import 'package:hilo/screens/splash_screen.dart';
 
 void main() {
   runApp(
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Dice Analysis'),
+      home: const SplashScreen(),
     );
   }
 }
