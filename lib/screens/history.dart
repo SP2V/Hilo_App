@@ -548,25 +548,25 @@ class _HistoryItemState extends State<HistoryItem> {
       case ItemState.delete:
         return Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.red.withOpacity(0.2),
-                  width: 1,
-                ),
-                color: const Color(0xFFFEE2E2),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: const Icon(
-                  Icons.warning_amber_rounded,
-                  color: Color(0xFFDC2626),
-                  size: 20,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
+            // Container(
+            //   padding: const EdgeInsets.all(10),
+            //   decoration: BoxDecoration(
+            //     border: Border.all(
+            //       color: Colors.red.withOpacity(0.2),
+            //       width: 1,
+            //     ),
+            //     color: const Color(0xFFFEE2E2),
+            //     shape: BoxShape.circle,
+            //   ),
+            //   child: Center(
+            //     child: const Icon(
+            //       Icons.warning_amber_rounded,
+            //       color: Color(0xFFDC2626),
+            //       size: 20,
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

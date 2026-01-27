@@ -50,6 +50,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final formKey = GlobalKey<FormState>();
   final _numberController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   String _selectedFilter = 'All'; // Track selected filter
   bool _sortByFrequency = false; // Track sort state
   bool _attemptedSubmit = false;
@@ -58,6 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     Provider.of<AppProvider>(context, listen: false).loadNumbers();
+    _focusNode.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _numberController.dispose();
+    super.dispose();
   }
 
   void _submitNumber() {
@@ -222,432 +233,441 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Dashboard Card
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAEFF5), // Light grey/blue ish
-                  image: DecorationImage(
-                    // image: AssetImage('assets/images/bg_card.jpg'),
-                    image: AssetImage('assets/images/bg.png'),
-                    fit: BoxFit.cover,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Dashboard Card
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAEFF5), // Light grey/blue ish
+                    image: DecorationImage(
+                      // image: AssetImage('assets/images/bg_card.jpg'),
+                      image: AssetImage('assets/images/bg.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Dice Tracker Dashboard',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                        // color: Color(0xFFFFFFFF),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Analyze dice frequency patterns from\nyour input data',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        // color: Colors.white,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Stats Cards
-              Consumer<AppProvider>(
-                builder: (context, provider, child) {
-                  final currentResult =
-                      provider.numbers.isNotEmpty
-                          ? provider.numbers.first.value
-                              .toString() // Assuming list is ordered new first
-                          : '---';
-                  final count = provider.numbers.length;
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'CURRENT RESULT',
-                          currentResult,
-                          imagePath: 'assets/images/dice.png',
-                          isHighlight: true, // Blue number
+                      const Text(
+                        'Dice Tracker Dashboard',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                          // color: Color(0xFFFFFFFF),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          'COUNT DICE',
-                          '$count',
-                          unit: 'rolls',
+                      const SizedBox(height: 8),
+                      Text(
+                        'Analyze dice frequency patterns from\nyour input data',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          // color: Colors.white,
+                          height: 1.4,
                         ),
                       ),
                     ],
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Input Section
-              const Text(
-                'Input Result',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 10,
-                    child: Form(
-                      key: formKey,
-                      child: TextFormField(
-                        controller: _numberController,
-                        keyboardType: TextInputType.number,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(3),
-                          FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
-                        ],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                        textAlign:
-                            TextAlign
-                                .center, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
-                        // Let's assume left input, icon right.
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 17,
-                          ),
-                          filled: true,
-                          fillColor: const Color(
-                            0xFFF1F5F9,
-                          ), // Light grey background
-                          hintText: 'Enter a number from 1 to 6',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                            fontWeight: FontWeight.normal,
-                          ),
-                          // suffixIcon: Padding(
-                          //   padding: const EdgeInsets.only(right: 20),
-                          //   child: Align(
-                          //     alignment: Alignment.centerRight,
-                          //     widthFactor: 1.0,
-                          //     child: Text(
-                          //       '1 to 6',
-                          //       style: TextStyle(
-                          //         color: Colors.grey[400],
-                          //         fontWeight: FontWeight.w500,
-                          //         fontSize: 14,
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1), // Grey border
-                              width: 1,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1), // Grey border
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF3B82F6),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF4444),
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF4444),
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return _attemptedSubmit
-                                ? 'Please enter a number'
-                                : null;
-                          }
-                          if (value.length != 3) {
-                            return 'Please enter a 3-digit number';
-                          }
-                          // Check if all digits are between 1-6
-                          for (int i = 0; i < value.length; i++) {
-                            int digit = int.tryParse(value[i]) ?? 0;
-                            if (digit < 1 || digit > 6) {
-                              return 'Each digit must be between 1 and 6';
-                            }
-                          }
-                          return null;
-                        },
-                        onFieldSubmitted: (_) => _submitNumber(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    flex: 5,
-                    child: ElevatedButton.icon(
-                      onPressed: _submitNumber,
-                      // icon: const Icon(
-                      //   Icons.check,
-                      //   size: 18,
-                      //   color: Colors.white,
-                      // ),
-                      label: const Text(
-                        'Enter',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6), // Blue
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 18,
-                        ),
-                        side: const BorderSide(
-                          color: Color(0xFF3B82F6),
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                // Stats Cards
+                Consumer<AppProvider>(
+                  builder: (context, provider, child) {
+                    final currentResult =
+                        provider.numbers.isNotEmpty
+                            ? provider.numbers.first.value
+                                .toString() // Assuming list is ordered new first
+                            : '---';
+                    final count = provider.numbers.length;
 
-              // Buttons Row
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: ElevatedButton.icon(
-                      onPressed: _resetHistory,
-                      icon: const Icon(
-                        Icons.refresh,
-                        size: 18,
-                        color: Color(0xFFEF4444),
-                      ),
-                      label: const Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: Color(0xFFEF4444),
-                          fontWeight: FontWeight.bold,
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'CURRENT RESULT',
+                            currentResult,
+                            imagePath: 'assets/images/dice.png',
+                            isHighlight: true, // Blue number
+                          ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          255,
-                          244,
-                          244,
-                        ), // Light Red
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(
-                          color: Color(0xFFEF4444),
-                          width: 1.5,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            'COUNT DICE',
+                            '$count',
+                            unit: 'rolls',
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 3,
-                    child: OutlinedButton.icon(
-                      onPressed: _navigateToHistory,
-                      icon: const Icon(
-                        Icons.history,
-                        size: 18,
-                        color: Color(0xFF3B82F6),
-                      ),
-                      label: const Text(
-                        'History',
-                        style: TextStyle(
-                          color: Color(0xFF3B82F6),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Color(0xFF3B82F6),
-                          width: 1.5,
-                        ),
-                        // backgroundColor: Colors.white,
-                        backgroundColor: Color.fromARGB(255, 244, 248, 255),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
-
-              // Filters
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+                // Input Section
+                // const Text(
+                //   'Input Result',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     fontWeight: FontWeight.w500,
+                //     color: Color(0xFF64748B),
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFilterChip('All', _selectedFilter == 'All'),
-                    _buildFilterChip('Single', _selectedFilter == 'Single'),
-                    _buildFilterChip('Pair', _selectedFilter == 'Pair'),
-                    _buildFilterChip('Triple', _selectedFilter == 'Triple'),
-                    _buildFilterChip('Sum', _selectedFilter == 'Sum'),
+                    Expanded(
+                      flex: 10,
+                      child: Form(
+                        key: formKey,
+                        child: TextFormField(
+                          controller: _numberController,
+                          focusNode: _focusNode,
+                          keyboardType: TextInputType.number,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(3),
+                            FilteringTextInputFormatter.allow(RegExp(r'[1-6]')),
+                          ],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                          textAlign:
+                              TextAlign
+                                  .center, // Number usually aligns right or usually left? Image shows icon right. Text seems right aligned? No, placeholder 123 is right.
+                          // Let's assume left input, icon right.
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 17,
+                            ),
+                            filled: true,
+                            fillColor: const Color(
+                              0xFFF1F5F9,
+                            ), // Light grey background
+                            hintText:
+                                _focusNode.hasFocus
+                                    ? 'Enter a number from 1 to 6'
+                                    : 'Input Result',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                              fontWeight: FontWeight.normal,
+                            ),
+                            // suffixIcon: Padding(
+                            //   padding: const EdgeInsets.only(right: 20),
+                            //   child: Align(
+                            //     alignment: Alignment.centerRight,
+                            //     widthFactor: 1.0,
+                            //     child: Text(
+                            //       '1 to 6',
+                            //       style: TextStyle(
+                            //         color: Colors.grey[400],
+                            //         fontWeight: FontWeight.w500,
+                            //         fontSize: 14,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1), // Grey border
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1), // Grey border
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF3B82F6),
+                                width: 2,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFEF4444),
+                                width: 1.5,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFEF4444),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return _attemptedSubmit
+                                  ? 'Please enter a number'
+                                  : null;
+                            }
+                            if (value.length != 3) {
+                              return 'Please enter a 3-digit number';
+                            }
+                            // Check if all digits are between 1-6
+                            for (int i = 0; i < value.length; i++) {
+                              int digit = int.tryParse(value[i]) ?? 0;
+                              if (digit < 1 || digit > 6) {
+                                return 'Each digit must be between 1 and 6';
+                              }
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _submitNumber(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      flex: 5,
+                      child: ElevatedButton.icon(
+                        onPressed: _submitNumber,
+                        // icon: const Icon(
+                        //   Icons.check,
+                        //   size: 18,
+                        //   color: Colors.white,
+                        // ),
+                        label: const Text(
+                          'Enter',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3B82F6), // Blue
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 18,
+                          ),
+                          side: const BorderSide(
+                            color: Color(0xFF3B82F6),
+                            width: 2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-
-              // Data Table Header/Body
-              Consumer<AppProvider>(
-                builder: (context, provider, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.grey.withOpacity(0.2),
-                        width: 1,
+                // Buttons Row
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: ElevatedButton.icon(
+                        onPressed: _resetHistory,
+                        icon: const Icon(
+                          Icons.refresh,
+                          size: 18,
+                          color: Color(0xFFEF4444),
+                        ),
+                        label: const Text(
+                          'Reset',
+                          style: TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            255,
+                            244,
+                            244,
+                          ), // Light Red
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(
+                            color: Color(0xFFEF4444),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                        ),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 12,
-                            bottom: 12,
-                            left: 24,
-                            right: 12,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: OutlinedButton.icon(
+                        onPressed: _navigateToHistory,
+                        icon: const Icon(
+                          Icons.history,
+                          size: 18,
+                          color: Color(0xFF3B82F6),
+                        ),
+                        label: const Text(
+                          'History',
+                          style: TextStyle(
+                            color: Color(0xFF3B82F6),
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'DICE',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF64748B),
-                                  letterSpacing: 1,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: Color(0xFF3B82F6),
+                            width: 1.5,
+                          ),
+                          // backgroundColor: Colors.white,
+                          backgroundColor: Color.fromARGB(255, 244, 248, 255),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Filters
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('All', _selectedFilter == 'All'),
+                      _buildFilterChip('Single', _selectedFilter == 'Single'),
+                      _buildFilterChip('Pair', _selectedFilter == 'Pair'),
+                      _buildFilterChip('Triple', _selectedFilter == 'Triple'),
+                      _buildFilterChip('Sum', _selectedFilter == 'Sum'),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Data Table Header/Body
+                Consumer<AppProvider>(
+                  builder: (context, provider, child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 12,
+                              bottom: 12,
+                              left: 24,
+                              right: 12,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'DICE',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF64748B),
+                                    letterSpacing: 1,
+                                  ),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _sortByFrequency = !_sortByFrequency;
-                                  });
-                                },
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      'FREQUENCY',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _sortByFrequency = !_sortByFrequency;
+                                    });
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'FREQUENCY',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                              _sortByFrequency
+                                                  ? const Color(0xFF3B82F6)
+                                                  : const Color(0xFF64748B),
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        _sortByFrequency
+                                            ? Icons.expand_more
+                                            : Icons.unfold_more,
+                                        size: 16,
                                         color:
                                             _sortByFrequency
                                                 ? const Color(0xFF3B82F6)
                                                 : const Color(0xFF64748B),
-                                        letterSpacing: 1,
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      _sortByFrequency
-                                          ? Icons.expand_more
-                                          : Icons.unfold_more,
-                                      size: 16,
-                                      color:
-                                          _sortByFrequency
-                                              ? const Color(0xFF3B82F6)
-                                              : const Color(0xFF64748B),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Table Rows
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(
-                              bottom: Radius.circular(12),
+                              ],
                             ),
                           ),
-                          child: Column(children: _buildStatsRows(provider)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
+
+                          // Table Rows
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(
+                                bottom: Radius.circular(12),
+                              ),
+                            ),
+                            child: Column(children: _buildStatsRows(provider)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -707,8 +727,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
 
+          // const SizedBox(height: 2),
           Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -827,6 +847,10 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _buildStatsRows(AppProvider provider) {
     List<Widget> rows = [];
 
+    // Use predictive pool for all calculations
+    List<Numbers> predictivePool = provider.getPredictivePool();
+    int totalPredictive = predictivePool.length;
+
     // Collect items separately for each category
     List<MapEntry<String, int>> singleItems = [];
     List<MapEntry<String, int>> pairItems = [];
@@ -835,7 +859,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Single faces (1-6)
     if (_selectedFilter == 'All' || _selectedFilter == 'Single') {
-      Map<int, int> faceCount = provider.getFaceCount();
+      // Use predictive pool as source
+      Map<int, int> faceCount = provider.getFaceCount(source: predictivePool);
       for (int i = 1; i <= 6; i++) {
         int count = faceCount[i] ?? 0;
         if (count > 0) {
@@ -846,7 +871,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Pairs (sorted by value: 11, 12, 13, ..., 66)
     if (_selectedFilter == 'All' || _selectedFilter == 'Pair') {
-      Map<String, int> pairs = provider.getPairs();
+      // Use predictive pool as source
+      Map<String, int> pairs = provider.getPairs(source: predictivePool);
       List<String> sortedKeys = pairs.keys.toList()..sort();
       for (String key in sortedKeys) {
         int count = pairs[key] ?? 0;
@@ -860,7 +886,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Triples (sorted by value: 111, 112, ..., 666)
     if (_selectedFilter == 'All' || _selectedFilter == 'Triple') {
-      Map<String, int> triples = provider.getTriples();
+      // Use predictive pool as source
+      Map<String, int> triples = provider.getTriples(source: predictivePool);
       List<String> sortedKeys = triples.keys.toList()..sort();
       for (String key in sortedKeys) {
         int count = triples[key] ?? 0;
@@ -874,7 +901,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Sums (sorted by value: 3, 4, 5, ..., 18)
     if (_selectedFilter == 'All' || _selectedFilter == 'Sum') {
-      Map<int, int> sums = provider.getSums();
+      // Use predictive pool as source
+      Map<int, int> sums = provider.getSums(source: predictivePool);
       List<int> sortedKeys = sums.keys.toList()..sort();
       for (int key in sortedKeys) {
         int count = sums[key] ?? 0;
@@ -893,12 +921,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     // Build rows from each category in order
+    // Pass total: totalPredictive to getFrequency to calculate correct %
     for (int i = 0; i < singleItems.length; i++) {
       final item = singleItems[i];
       rows.add(
         _buildStatRow(
           item.key,
-          provider.getFrequency(item.value),
+          provider.getFrequency(item.value, total: totalPredictive),
           categoryLabel: i == 0 ? '(Single)' : null,
         ),
       );
@@ -908,13 +937,9 @@ class _MyHomePageState extends State<MyHomePage> {
       rows.add(
         _buildStatRow(
           item.key,
-          provider.getFrequency(item.value),
-          categoryLabel:
-              i == 0
-                  ? '(Pair)'
-                  : null, // User asked for Double likely, or Pair? Request said "Double"
-        ), // Actually user request image showed (Single). User text said "เหมือนในรูปนี้" (like in this picture).
-        // The plan said "(Double)" for pairs. I will stick to "(Double)" as it pairs with "Single".
+          provider.getFrequency(item.value, total: totalPredictive),
+          categoryLabel: i == 0 ? '(Pair)' : null,
+        ),
       );
     }
     for (int i = 0; i < tripleItems.length; i++) {
@@ -922,7 +947,7 @@ class _MyHomePageState extends State<MyHomePage> {
       rows.add(
         _buildStatRow(
           item.key,
-          provider.getFrequency(item.value),
+          provider.getFrequency(item.value, total: totalPredictive),
           categoryLabel: i == 0 ? '(Triple)' : null,
         ),
       );
@@ -932,29 +957,7 @@ class _MyHomePageState extends State<MyHomePage> {
       rows.add(
         _buildStatRow(
           item.key,
-          provider.getFrequency(item.value),
-          // Sum usually doesn't need "(Sum)" if the key is "Sum 10".
-          // But if the key is just the number, we might need it.
-          // Looking at previous code: sumItems.add(MapEntry('Sum $key', count));
-          // So the key already contains "Sum".
-          // However, the user said "แยกประเภทของแต่ละอันให้หน่อย" (Separate types for each one).
-          // If the key is "Sum 10", it already says Sum.
-          // But to be consistent with "Single", "Double", "Triple", we might not need an extra label for Sum if the item itself says "Sum".
-          // Let's check the previous code for single items. keys are "1", "2".
-          // Pair keys are "1,2".
-          // Triple keys are "1,1,1".
-          // Sum keys are "Sum 4".
-          // So Sum is already labeled. I will NOT add an extra "(Sum)" label to avoid redundancy like "Sum 4 (Sum)".
-          // OR, maybe the user wants it.
-          // Let's look at the request: "ให้มีข้อความข้างหลังตัวเลขเพื่อแยกประเภทของแต่ละอันให้หน่อยใส่แค่ตัวแรกของแต่ละประเภทเท่านั้น"
-          // "Have text behind the number to distinguish the type of each one, put only on the first of each type".
-          // If 'Sum 4' is the text, it already distinguishes.
-          // But 'Single' (1) and 'Pair' (1,1) don't explicitly say "Pair".
-          // So Single, Double, Triple are needed. Sum is redundant but maybe consistent?
-          // I'll skip Sum label since the key has it.
-          // Wait, if I look at the screenshot, it has (Single).
-          // I'll add categories for Single, Double (Pair), Triple.
-          // Sum items already have "Sum" in the key string.
+          provider.getFrequency(item.value, total: totalPredictive),
           categoryLabel: i == 0 ? '(Sum)' : null,
         ),
       );
