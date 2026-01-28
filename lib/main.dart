@@ -848,123 +848,14 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _buildStatsRows(AppProvider provider) {
     List<Widget> rows = [];
 
-    // Use predictive pool for all calculations
-    List<Numbers> predictivePool = provider.getPredictivePool();
-    int totalPredictive = predictivePool.length;
+    // Use the new getStatsRows method which uses the user's logic
+    // We pass the filter and sort preference.
+    final stats = provider.getStatsRows(
+      _selectedFilter,
+      sortByFreq: _sortByFrequency,
+    );
 
-    // Collect items separately for each category
-    List<MapEntry<String, int>> singleItems = [];
-    List<MapEntry<String, int>> pairItems = [];
-    List<MapEntry<String, int>> tripleItems = [];
-    List<MapEntry<String, int>> sumItems = [];
-
-    // Single faces (1-6)
-    if (_selectedFilter == 'All' || _selectedFilter == 'Single') {
-      // Use predictive pool as source
-      Map<int, int> faceCount = provider.getFaceCount(source: predictivePool);
-      for (int i = 1; i <= 6; i++) {
-        int count = faceCount[i] ?? 0;
-        if (count > 0) {
-          singleItems.add(MapEntry(i.toString(), count));
-        }
-      }
-    }
-
-    // Pairs (sorted by value: 11, 12, 13, ..., 66)
-    if (_selectedFilter == 'All' || _selectedFilter == 'Pair') {
-      // Use predictive pool as source
-      Map<String, int> pairs = provider.getPairs(source: predictivePool);
-      List<String> sortedKeys = pairs.keys.toList()..sort();
-      for (String key in sortedKeys) {
-        int count = pairs[key] ?? 0;
-        if (count > 0) {
-          // Format with comma: "12" -> "1,2"
-          String formattedKey = key.split('').join(',');
-          pairItems.add(MapEntry(formattedKey, count));
-        }
-      }
-    }
-
-    // Triples (sorted by value: 111, 112, ..., 666)
-    if (_selectedFilter == 'All' || _selectedFilter == 'Triple') {
-      // Use predictive pool as source
-      Map<String, int> triples = provider.getTriples(source: predictivePool);
-      List<String> sortedKeys = triples.keys.toList()..sort();
-      for (String key in sortedKeys) {
-        int count = triples[key] ?? 0;
-        if (count > 0) {
-          // Format with comma: "123" -> "1,2,3"
-          String formattedKey = key.split('').join(',');
-          tripleItems.add(MapEntry(formattedKey, count));
-        }
-      }
-    }
-
-    // Sums (sorted by value: 3, 4, 5, ..., 18)
-    if (_selectedFilter == 'All' || _selectedFilter == 'Sum') {
-      // Use predictive pool as source
-      Map<int, int> sums = provider.getSums(source: predictivePool);
-      List<int> sortedKeys = sums.keys.toList()..sort();
-      for (int key in sortedKeys) {
-        int count = sums[key] ?? 0;
-        if (count > 0) {
-          sumItems.add(MapEntry('Sum $key', count));
-        }
-      }
-    }
-
-    // Sort each category by frequency if enabled
-    if (_sortByFrequency) {
-      singleItems.sort((a, b) => b.value.compareTo(a.value));
-      pairItems.sort((a, b) => b.value.compareTo(a.value));
-      tripleItems.sort((a, b) => b.value.compareTo(a.value));
-      sumItems.sort((a, b) => b.value.compareTo(a.value));
-    }
-
-    // Build rows from each category in order
-    // Pass total: totalPredictive to getFrequency to calculate correct %
-    for (int i = 0; i < singleItems.length; i++) {
-      final item = singleItems[i];
-      rows.add(
-        _buildStatRow(
-          item.key,
-          provider.getFrequency(item.value, total: totalPredictive),
-          categoryLabel: i == 0 ? '(Single)' : null,
-        ),
-      );
-    }
-    for (int i = 0; i < pairItems.length; i++) {
-      final item = pairItems[i];
-      rows.add(
-        _buildStatRow(
-          item.key,
-          provider.getFrequency(item.value, total: totalPredictive),
-          categoryLabel: i == 0 ? '(Pair)' : null,
-        ),
-      );
-    }
-    for (int i = 0; i < tripleItems.length; i++) {
-      final item = tripleItems[i];
-      rows.add(
-        _buildStatRow(
-          item.key,
-          provider.getFrequency(item.value, total: totalPredictive),
-          categoryLabel: i == 0 ? '(Triple)' : null,
-        ),
-      );
-    }
-    for (int i = 0; i < sumItems.length; i++) {
-      final item = sumItems[i];
-      rows.add(
-        _buildStatRow(
-          item.key,
-          provider.getFrequency(item.value, total: totalPredictive),
-          categoryLabel: i == 0 ? '(Sum)' : null,
-        ),
-      );
-    }
-
-    if (rows.isEmpty) {
+    if (stats.isEmpty) {
       rows.add(
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 90, horizontal: 132),
@@ -973,6 +864,17 @@ class _MyHomePageState extends State<MyHomePage> {
             style: TextStyle(color: Colors.grey[400], fontSize: 14),
             textAlign: TextAlign.center,
           ),
+        ),
+      );
+      return rows;
+    }
+
+    for (var stat in stats) {
+      rows.add(
+        _buildStatRow(
+          stat.dice,
+          stat.frequency,
+          categoryLabel: stat.label.isNotEmpty ? stat.label : null,
         ),
       );
     }

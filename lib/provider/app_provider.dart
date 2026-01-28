@@ -62,187 +62,277 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Statistics calculation methods
-  Map<int, int> getFaceCount({List<Numbers>? source}) {
-    Map<int, int> faceCount = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
-    List<Numbers> data = source ?? _numbers;
+  // --- New Prediction Logic Integration ---
 
-    for (var number in data) {
-      String valueStr = number.value.toString();
-      for (int i = 0; i < valueStr.length; i++) {
-        int digit = int.parse(valueStr[i]);
-        if (digit >= 1 && digit <= 6) {
-          faceCount[digit] = (faceCount[digit] ?? 0) + 1;
-        }
+  List<int> _getDigits(int value) {
+    final s = value.toString().padLeft(3, '0');
+    return s.split('').map((e) => int.tryParse(e) ?? 0).toList();
+  }
+
+  Predictions get predictions {
+    if (_numbers.isEmpty) return Predictions();
+    // _numbers is [newest, ..., oldest]
+    // history needs to be [oldest, ..., newest] for the user's logic iterating 0..length
+    final history = _numbers.reversed.map((n) => _getDigits(n.value)).toList();
+    final lastRoll = history.last;
+    return calculatePredictions(history, lastRoll);
+  }
+
+  List<StatRow> getStatsRows(String activeFilter, {bool sortByFreq = false}) {
+    return buildStatsRows(
+      predictions,
+      activeFilter.toLowerCase(),
+      sortByFreq: sortByFreq,
+    );
+  }
+
+  // Preserve old methods if needed, or rely on new logic.
+  // The UI will be updated to use getStatsRows, so we can ignore old methods or remove them later.
+  // For now I'm leaving the class structure clean by not deleting old methods yet if I was editing,
+  // but since I am overwriting the file or appending, I should be careful.
+  // I will append the user's classes and functions at the end of the file.
+}
+
+// --- User Provided Logic Classes and Functions ---
+
+class Predictions {
+  Map<int, int> faceCount;
+  Map<String, int> pairs;
+  Map<String, int> triples;
+  Map<int, int> sums;
+  int totalMatches;
+
+  Predictions({
+    Map<int, int>? faceCount,
+    Map<String, int>? pairs,
+    Map<String, int>? triples,
+    Map<int, int>? sums,
+    this.totalMatches = 0,
+  }) : faceCount = faceCount ?? {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0},
+       pairs = pairs ?? {},
+       triples = triples ?? {},
+       sums = sums ?? {};
+}
+
+bool matchesTriple(List<int> roll1, List<int> roll2) {
+  if (roll1.length != 3 || roll2.length != 3) return false;
+  final s1 = List<int>.from(roll1)..sort();
+  final s2 = List<int>.from(roll2)..sort();
+  for (var i = 0; i < 3; i++) {
+    if (s1[i] != s2[i]) return false;
+  }
+  return true;
+}
+
+bool matchesPair(List<int> roll1, List<int> roll2) {
+  if (roll1.length != 3 || roll2.length != 3) return false;
+
+  Set<String> makePairs(List<int> r) {
+    final s = List<int>.from(r)..sort();
+    final p = <String>{};
+    p.add('${s[0]}${s[1]}');
+    p.add('${s[0]}${s[2]}');
+    p.add('${s[1]}${s[2]}');
+    return p;
+  }
+
+  final p1 = makePairs(roll1);
+  final p2 = makePairs(roll2);
+  for (var x in p1) {
+    if (p2.contains(x)) return true;
+  }
+  return false;
+}
+
+bool matchesSum(List<int> roll1, List<int> roll2) {
+  int sum(List<int> r) => r.fold(0, (a, b) => a + b);
+  return sum(roll1) == sum(roll2);
+}
+
+Predictions calculatePredictions(List<List<int>> history, List<int>? lastRoll) {
+  if (lastRoll == null || history.length < 2) {
+    return Predictions();
+  }
+
+  final predictions = Predictions();
+
+  for (var i = 0; i < history.length - 1; i++) {
+    final currentRoll = history[i];
+    final nextRoll = history[i + 1];
+
+    final hasTripleMatch = matchesTriple(currentRoll, lastRoll);
+    final hasPairMatch = matchesPair(currentRoll, lastRoll);
+    final hasSumMatch = matchesSum(currentRoll, lastRoll);
+
+    final isNextRollTheLastOne = (i + 1 == history.length - 1);
+
+    if ((hasTripleMatch || hasPairMatch || hasSumMatch) &&
+        !isNextRollTheLastOne) {
+      predictions.totalMatches++;
+
+      // Count unique faces (singles)
+      final uniqueFaces = nextRoll.toSet();
+      for (var face in uniqueFaces) {
+        predictions.faceCount[face] = (predictions.faceCount[face] ?? 0) + 1;
       }
-    }
 
-    return faceCount;
-  }
-
-  Map<String, int> getPairs({List<Numbers>? source}) {
-    Map<String, int> pairs = {};
-    List<Numbers> data = source ?? _numbers;
-
-    for (var number in data) {
-      String valueStr = number.value.toString().padLeft(3, '0');
-      if (valueStr.length >= 2) {
-        List<String> digits = valueStr.split('');
-        List<String> sorted = List.from(digits)..sort();
-
-        // Generate all unique pairs
-        Set<String> uniquePairs = {
-          '${sorted[0]}${sorted[1]}',
-          '${sorted[0]}${sorted[2]}',
-          '${sorted[1]}${sorted[2]}',
-        };
-
-        for (var pair in uniquePairs) {
-          pairs[pair] = (pairs[pair] ?? 0) + 1;
-        }
+      // Count pairs (unique)
+      final sorted = List<int>.from(nextRoll)..sort();
+      final allPairs = <String>{
+        '${sorted[0]}${sorted[1]}',
+        '${sorted[0]}${sorted[2]}',
+        '${sorted[1]}${sorted[2]}',
+      };
+      for (var pairKey in allPairs) {
+        predictions.pairs[pairKey] = (predictions.pairs[pairKey] ?? 0) + 1;
       }
-    }
 
-    return pairs;
+      // Count triple
+      final tripleKey = '${sorted[0]}${sorted[1]}${sorted[2]}';
+      predictions.triples[tripleKey] =
+          (predictions.triples[tripleKey] ?? 0) + 1;
+
+      // Count sum
+      final sum = nextRoll.fold(0, (a, b) => a + b);
+      predictions.sums[sum] = (predictions.sums[sum] ?? 0) + 1;
+    }
   }
 
-  Map<String, int> getTriples({List<Numbers>? source}) {
-    Map<String, int> triples = {};
-    List<Numbers> data = source ?? _numbers;
+  return predictions;
+}
 
-    for (var number in data) {
-      String valueStr = number.value.toString().padLeft(3, '0');
-      if (valueStr.length >= 3) {
-        List<String> digits = valueStr.split('');
-        List<String> sorted = List.from(digits)..sort();
-        String tripleKey = sorted.join('');
-        triples[tripleKey] = (triples[tripleKey] ?? 0) + 1;
-      }
-    }
+class StatRow {
+  final String dice;
+  final String label;
+  final String frequency;
+  final String type;
+  final dynamic sortValue;
+  final int count;
 
-    return triples;
+  StatRow(
+    this.dice,
+    this.label,
+    this.frequency,
+    this.type,
+    this.sortValue,
+    this.count,
+  );
+}
+
+List<StatRow> buildStatsRows(
+  Predictions predictions,
+  String activeFilter, {
+  bool sortByFreq = false,
+}) {
+  final rows = <StatRow>[];
+  final total = predictions.totalMatches;
+
+  String freqText(int count) {
+    if (total == 0) return '-';
+    final pct = ((count / total) * 100).round();
+    return '$count/$total = ${pct}%';
   }
 
-  Map<int, int> getSums({List<Numbers>? source}) {
-    Map<int, int> sums = {};
-    List<Numbers> data = source ?? _numbers;
-
-    for (var number in data) {
-      String valueStr = number.value.toString();
-      int sum = 0;
-      for (int i = 0; i < valueStr.length; i++) {
-        sum += int.parse(valueStr[i]);
-      }
-      sums[sum] = (sums[sum] ?? 0) + 1;
+  if (activeFilter == 'all' || activeFilter == 'single') {
+    var entries = <MapEntry<int, int>>[];
+    for (var i = 1; i <= 6; i++) {
+      final c = predictions.faceCount[i] ?? 0;
+      if (c > 0) entries.add(MapEntry(i, c));
+    }
+    if (sortByFreq) {
+      entries.sort((a, b) => b.value.compareTo(a.value));
+    } else {
+      entries.sort((a, b) => a.key.compareTo(b.key));
     }
 
-    return sums;
-  }
-
-  // Helper to count digit frequency
-  Map<String, int> _getFrequencyMap(String numStr) {
-    Map<String, int> map = {};
-    for (int i = 0; i < numStr.length; i++) {
-      String digit = numStr[i];
-      map[digit] = (map[digit] ?? 0) + 1;
+    for (var i = 0; i < entries.length; i++) {
+      final key = entries[i].key;
+      final val = entries[i].value;
+      rows.add(
+        StatRow(
+          key.toString(),
+          i == 0 && activeFilter == 'all' ? '(single)' : '',
+          freqText(val),
+          'single',
+          key,
+          val,
+        ),
+      );
     }
-    return map;
   }
 
-  // Get predictive pool based on similarity to the latest number
-  List<Numbers> getPredictivePool() {
-    if (_numbers.isEmpty) return [];
-
-    List<Numbers> pool = [];
-    Numbers latest = _numbers.first;
-    Map<String, int> latestMap = _getFrequencyMap(latest.value.toString());
-
-    // Iterate history starting from index 1 (previous rounds)
-    // We look for contexts similar to 'latest', and collect the *next* outcome
-    // Since list is ordered [latest, ..., oldest], if _numbers[i] is the context,
-    // then _numbers[i-1] is the outcome that followed it.
-    for (int i = 1; i < _numbers.length; i++) {
-      Numbers context = _numbers[i];
-      Map<String, int> contextMap = _getFrequencyMap(context.value.toString());
-
-      int matchCount = 0;
-      latestMap.forEach((digit, count) {
-        if (contextMap.containsKey(digit)) {
-          int commonCount =
-              count < contextMap[digit]! ? count : contextMap[digit]!;
-          matchCount += commonCount;
-        }
-      });
-
-      // Similarity condition from user: match >= 2
-      if (matchCount >= 2) {
-        // Add the outcome that followed this context
-        pool.add(_numbers[i - 1]);
-      }
+  if (activeFilter == 'all' || activeFilter == 'pair') {
+    final entries =
+        predictions.pairs.entries.where((e) => e.value > 0).toList();
+    if (sortByFreq) {
+      entries.sort((a, b) => b.value.compareTo(a.value));
+    } else {
+      entries.sort((a, b) => a.key.compareTo(b.key));
     }
 
-    return pool;
+    for (var i = 0; i < entries.length; i++) {
+      final e = entries[i];
+      final formatted = e.key.split('').join(',');
+      rows.add(
+        StatRow(
+          formatted,
+          i == 0 && activeFilter == 'all' ? '(pair)' : '',
+          freqText(e.value),
+          'pair',
+          e.key,
+          e.value,
+        ),
+      );
+    }
   }
 
-  // --- ส่วนที่เพิ่มใหม่: Logic คำนวณความน่าจะเป็นของ Input ตัวใหม่ ---
-
-  // Helper class หรือ Map เพื่อส่งค่ากลับ
-  Map<String, dynamic> calculateProbability(int inputNumber) {
-    if (_numbers.isEmpty) {
-      return {'probability': '0.00%', 'matchCount': 0, 'relatedNumbers': []};
+  if (activeFilter == 'all' || activeFilter == 'triple') {
+    final entries =
+        predictions.triples.entries.where((e) => e.value > 0).toList();
+    if (sortByFreq) {
+      entries.sort((a, b) => b.value.compareTo(a.value));
+    } else {
+      entries.sort((a, b) => a.key.compareTo(b.key));
     }
 
-    // 1. แปลง Input เป็น Frequency Map (เช่น 324 -> {3:1, 2:1, 4:1})
-    String inputStr = inputNumber.toString();
-    Map<String, int> inputMap = _getFrequencyMap(inputStr);
+    for (var i = 0; i < entries.length; i++) {
+      final e = entries[i];
+      final formatted = e.key.split('').join(',');
+      rows.add(
+        StatRow(
+          formatted,
+          i == 0 && activeFilter == 'all' ? '(triple)' : '',
+          freqText(e.value),
+          'triple',
+          e.key,
+          e.value,
+        ),
+      );
+    }
+  }
 
-    List<Map<String, dynamic>> relatedNumbers = [];
-
-    // 2. Loop เช็คกับ History ทุกตัว
-    for (var number in _numbers) {
-      String histStr = number.value.toString();
-      Map<String, int> histMap = _getFrequencyMap(histStr);
-
-      int matchCount = 0;
-      List<String> matchedDigits = [];
-
-      // Logic: นับจำนวนที่ตรงกันจริง (รวมเลขเบิ้ล)
-      inputMap.forEach((digit, count) {
-        if (histMap.containsKey(digit)) {
-          // เอาจำนวนที่น้อยที่สุดของทั้งสองฝั่ง (เช่น Input มี 1 สองตัว, Hist มี 1 ตัวเดียว -> ได้ 1 แต้ม)
-          int commonCount = count < histMap[digit]! ? count : histMap[digit]!;
-          matchCount += commonCount;
-          // เก็บตัวเลขที่ตรงกันไว้แสดงผล
-          for (int i = 0; i < commonCount; i++) matchedDigits.add(digit);
-        }
-      });
-
-      // เงื่อนไข: ต้องตรงกัน 2 ตัวขึ้นไป (เช่น 23, 24, 34)
-      if (matchCount >= 2) {
-        relatedNumbers.add({
-          'value': number.value,
-          'matches': matchCount,
-          'matchedDigits': matchedDigits.join(','),
-        });
-      }
+  if (activeFilter == 'all' || activeFilter == 'sum') {
+    final entries = predictions.sums.entries.where((e) => e.value > 0).toList();
+    if (sortByFreq) {
+      entries.sort((a, b) => b.value.compareTo(a.value));
+    } else {
+      entries.sort((a, b) => a.key.compareTo(b.key));
     }
 
-    // 3. คำนวณเปอร์เซ็นต์
-    double probability = (relatedNumbers.length / _numbers.length) * 100;
-
-    return {
-      'probability': '${probability.toStringAsFixed(2)}%',
-      'matchCount': relatedNumbers.length,
-      'totalHistory': _numbers.length,
-      'relatedNumbers':
-          relatedNumbers, // รายการเลขที่เข้าเงื่อนไขเอาไปโชว์ต่อได้
-    };
+    for (var i = 0; i < entries.length; i++) {
+      final e = entries[i];
+      rows.add(
+        StatRow(
+          'Sum ${e.key}',
+          i == 0 && activeFilter == 'all' ? '(Sum)' : '',
+          freqText(e.value),
+          'sum',
+          e.key,
+          e.value,
+        ),
+      );
+    }
   }
 
-  String getFrequency(int count, {int? total}) {
-    int denominator = total ?? _numbers.length;
-    if (denominator == 0) return '-';
-    double pct = (count / denominator) * 100;
-    return '$count/$denominator = ${pct.toStringAsFixed(0)}%';
-  }
+  return rows;
 }
