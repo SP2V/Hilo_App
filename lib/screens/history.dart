@@ -56,134 +56,139 @@ class _MyHistoryState extends State<MyHistory> {
           ),
           // Main content
           SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: InkWell(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFBFDBFE).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: Color.fromARGB(
-                              255,
-                              154,
-                              187,
-                              228,
-                            ).withOpacity(1),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: Color(0xFF1D4ED8),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Roll History', // Keeping English for consistency or "ประวัติการทอย" as requested before? Keeping Thai as per previous flow if needed but user asked "white mode".
-                              // Let's stick closer to the "Dice Analysis" look which was English. But previous convo had Thai.
-                              // I will use "Roll History" to match "Dice Analysis" English.
-                              style: TextStyle(
-                                color: Color(0xFF1E3A8A),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFBFDBFE).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Color.fromARGB(
+                                  255,
+                                  154,
+                                  187,
+                                  228,
+                                ).withOpacity(1),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Image.asset(
-                              'assets/images/dice.png',
-                              width: 20,
-                              height: 20,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.arrow_back_ios_new,
+                                  color: Color(0xFF1D4ED8),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Roll History', // Keeping English for consistency or "ประวัติการทอย" as requested before? Keeping Thai as per previous flow if needed but user asked "white mode".
+                                  // Let's stick closer to the "Dice Analysis" look which was English. But previous convo had Thai.
+                                  // I will use "Roll History" to match "Dice Analysis" English.
+                                  style: TextStyle(
+                                    color: Color(0xFF1E3A8A),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Image.asset(
+                                  'assets/images/dice.png',
+                                  width: 20,
+                                  height: 20,
+                                ),
+                                // const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
+                              ],
                             ),
-                            // const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                // List
-                Expanded(
-                  child: Consumer<AppProvider>(
-                    builder: (context, provider, child) {
-                      // Data is already sorted newest first from database
-                      if (provider.numbers.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No historical data available.',
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                              fontSize: 16,
-                            ),
-                          ),
-                        );
-                      }
+                    // List
+                    Expanded(
+                      child: Consumer<AppProvider>(
+                        builder: (context, provider, child) {
+                          // Data is already sorted newest first from database
+                          if (provider.numbers.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No historical data available.',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: provider.numbers.length,
-                        itemBuilder: (context, index) {
-                          final number = provider.numbers[index];
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: provider.numbers.length,
+                            itemBuilder: (context, index) {
+                              final number = provider.numbers[index];
 
-                          return HistoryItem(
-                            key: ValueKey(number),
-                            number: number,
-                            index: index,
+                              return HistoryItem(
+                                key: ValueKey(number),
+                                number: number,
+                                index: index,
+                              );
+                            },
                           );
+
+                          // return ShaderMask(
+                          //   shaderCallback: (Rect bounds) {
+                          //     return LinearGradient(
+                          //       begin: Alignment.topCenter,
+                          //       end: Alignment.bottomCenter,
+                          //       colors: [
+                          //         Colors.white,
+                          //         Colors.white,
+                          //         Colors.white.withOpacity(0.0),
+                          //       ],
+                          //       stops: const [0.0, 0.85, 1.0],
+                          //     ).createShader(bounds);
+                          //   },
+                          //   blendMode: BlendMode.dstIn,
+                          //   child: ListView.builder(
+                          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                          //     itemCount: provider.numbers.length,
+                          //     itemBuilder: (context, index) {
+                          //       final number = provider.numbers[index];
+
+                          //       return HistoryItem(
+                          //         key: ValueKey(number),
+                          //         number: number,
+                          //         index: index,
+                          //       );
+                          //     },
+                          //   ),
+                          // );
                         },
-                      );
-
-                      // return ShaderMask(
-                      //   shaderCallback: (Rect bounds) {
-                      //     return LinearGradient(
-                      //       begin: Alignment.topCenter,
-                      //       end: Alignment.bottomCenter,
-                      //       colors: [
-                      //         Colors.white,
-                      //         Colors.white,
-                      //         Colors.white.withOpacity(0.0),
-                      //       ],
-                      //       stops: const [0.0, 0.85, 1.0],
-                      //     ).createShader(bounds);
-                      //   },
-                      //   blendMode: BlendMode.dstIn,
-                      //   child: ListView.builder(
-                      //     padding: const EdgeInsets.symmetric(horizontal: 16),
-                      //     itemCount: provider.numbers.length,
-                      //     itemBuilder: (context, index) {
-                      //       final number = provider.numbers[index];
-
-                      //       return HistoryItem(
-                      //         key: ValueKey(number),
-                      //         number: number,
-                      //         index: index,
-                      //       );
-                      //     },
-                      //   ),
-                      // );
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
