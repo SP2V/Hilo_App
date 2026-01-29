@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _numberController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String _selectedFilter = 'All'; // Track selected filter
-  bool _sortByFrequency = false; // Track sort state
+  bool _sortByFrequency = true; // Track sort state
   bool _attemptedSubmit = false;
 
   @override
