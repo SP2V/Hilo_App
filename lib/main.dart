@@ -137,7 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 // Description
                 const Text(
-                  'Are you sure you want to clear all\nhistory? This action cannot be undone',
+                  'Are you sure you want to clear all history? This action cannot be undone',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -220,20 +220,20 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: Text(
-          widget.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-      ),
+      // appBar: AppBar(
+      //   title: Text(
+      //     widget.title,
+      //     style: const TextStyle(
+      //       fontWeight: FontWeight.bold,
+      //       fontSize: 18,
+      //       color: Color(0xFF1E293B),
+      //     ),
+      //   ),
+      //   centerTitle: true,
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   surfaceTintColor: Colors.transparent,
+      // ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
@@ -250,52 +250,53 @@ class _MyHomePageState extends State<MyHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Dashboard Card
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAEFF5), // Light grey/blue ish
-                        image: DecorationImage(
-                          // image: AssetImage('assets/images/bg_card.jpg'),
-                          image: AssetImage('assets/images/bg.png'),
-                          fit: BoxFit.cover,
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Dice Tracker Dashboard',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                              // color: Color(0xFFFFFFFF),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Analyze dice frequency patterns from\nyour input data',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              // color: Colors.white,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    // Container(
+                    //   padding: const EdgeInsets.all(24),
+                    //   decoration: BoxDecoration(
+                    //     color: const Color(0xFFEAEFF5), // Light grey/blue ish
+                    //     image: DecorationImage(
+                    //       // image: AssetImage('assets/images/bg_card.jpg'),
+                    //       image: AssetImage('assets/images/bg.png'),
+                    //       fit: BoxFit.cover,
+                    //     ),
+                    //     borderRadius: BorderRadius.circular(24),
+                    //     boxShadow: [
+                    //       BoxShadow(
+                    //         color: Colors.black.withOpacity(0.1),
+                    //         blurRadius: 10,
+                    //         offset: const Offset(0, 4),
+                    //       ),
+                    //     ],
+                    //   ),
+                    //   child: Column(
+                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                    //     children: [
+                    //       const Text(
+                    //         'Dice Tracker Dashboard',
+                    //         style: TextStyle(
+                    //           fontSize: 22,
+                    //           fontWeight: FontWeight.bold,
+                    //           color: Color(0xFF1E293B),
+                    //           // color: Color(0xFFFFFFFF),
+                    //         ),
+                    //       ),
+                    //       const SizedBox(height: 8),
+                    //       Text(
+                    //         'Analyze dice frequency patterns from\nyour input data',
+                    //         style: TextStyle(
+                    //           fontSize: 14,
+                    //           color: Colors.grey[600],
+                    //           // color: Colors.white,
+                    //           height: 1.4,
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
 
                     // Stats Cards
+                    const SizedBox(height: 20),
                     Consumer<AppProvider>(
                       builder: (context, provider, child) {
                         final currentResult =
@@ -316,7 +317,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 isHighlight: true, // Blue number
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 5),
                             Expanded(
                               child: _buildStatCard(
                                 'COUNT DICE',
@@ -328,7 +329,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         );
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
 
                     // Input Section
                     // const Text(
@@ -495,7 +496,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
 
                     // Buttons Row
                     Row(
@@ -535,7 +536,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 5),
                         Expanded(
                           flex: 3,
                           child: OutlinedButton.icon(
@@ -574,7 +575,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 15),
 
                     // Filters
                     SingleChildScrollView(
@@ -611,6 +612,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -880,8 +882,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (stats.isEmpty) {
       rows.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 90, horizontal: 132),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 90),
+          alignment: Alignment.center,
           child: Text(
             'No data available',
             style: TextStyle(color: Colors.grey[400], fontSize: 14),
