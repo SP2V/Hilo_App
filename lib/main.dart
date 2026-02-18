@@ -305,25 +305,68 @@ class _MyHomePageState extends State<MyHomePage> {
                                     .toString() // Assuming list is ordered new first
                                 : '---';
                         final count = provider.numbers.length;
+                        final gameStats = provider.gameStats;
 
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        return Column(
                           children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'CURRENT RESULT',
-                                currentResult,
-                                imagePath: 'assets/images/dice.png',
-                                isHighlight: true, // Blue number
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: _buildStatCard(
+                                    'CURRENT RESULT',
+                                    currentResult,
+                                    imagePath: 'assets/images/dice.png',
+                                    isHighlight: true, // Blue number
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Expanded(
+                                  child: _buildStatCard(
+                                    'COUNT DICE',
+                                    '$count',
+                                    unit: 'rolls',
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: _buildStatCard(
-                                'COUNT DICE',
-                                '$count',
-                                unit: 'rolls',
-                              ),
+                            const SizedBox(height: 12),
+                            // Stats Cards
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildStatCardSimple(
+                                    'Even',
+                                    gameStats.even,
+                                    const Color(0xFF5865F2),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildStatCardSimple(
+                                    'Odd',
+                                    gameStats.odd,
+                                    const Color(0xFF008F87),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildStatCardSimple(
+                                    'Hi',
+                                    gameStats.hi,
+                                    const Color(0xFF3B82F6),
+                                    borderColor: const Color(0xFF1F83FF),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildStatCardSimple(
+                                    'Low',
+                                    gameStats.low,
+                                    const Color(0xFFEF4B58),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         );
@@ -789,6 +832,55 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCardSimple(
+    String title,
+    int value,
+    Color textColor, {
+    Color? borderColor,
+  }) {
+    return Container(
+      height: 60, // Reduced from 77
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor ?? textColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: (borderColor ?? textColor).withOpacity(0.3),
+            blurRadius: 4, // Reduced from 6
+            offset: const Offset(0, 3), // Reduced from 4
+          ),
+          BoxShadow(
+            color: (borderColor ?? textColor).withOpacity(0.2),
+            blurRadius: 2, // Reduced from 4
+            offset: const Offset(0, 1), // Reduced from 2
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 20, // Reduced from 24
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10, // Reduced from 12
+              fontWeight: FontWeight.w500,
+              color: textColor,
+            ),
           ),
         ],
       ),

@@ -91,6 +91,46 @@ class AppProvider with ChangeNotifier {
   // For now I'm leaving the class structure clean by not deleting old methods yet if I was editing,
   // but since I am overwriting the file or appending, I should be careful.
   // I will append the user's classes and functions at the end of the file.
+
+  GameStats get gameStats {
+    int even = 0;
+    int odd = 0;
+    int hi = 0;
+    int low = 0;
+
+    for (var number in _numbers) {
+      final digits = _getDigits(number.value);
+      final sum = digits.fold(0, (a, b) => a + b);
+
+      if (sum % 2 == 0) {
+        even++;
+      } else {
+        odd++;
+      }
+
+      if (sum >= 11) {
+        hi++;
+      } else {
+        low++;
+      }
+    }
+
+    return GameStats(even: even, odd: odd, hi: hi, low: low);
+  }
+}
+
+class GameStats {
+  final int even;
+  final int odd;
+  final int hi;
+  final int low;
+
+  GameStats({
+    required this.even,
+    required this.odd,
+    required this.hi,
+    required this.low,
+  });
 }
 
 // --- User Provided Logic Classes and Functions ---
@@ -230,7 +270,7 @@ List<StatRow> buildStatsRows(
   String freqText(int count) {
     if (total == 0) return '-';
     final pct = ((count / total) * 100).round();
-    return '$count/$total = ${pct}%';
+    return '$count/$total = $pct%';
   }
 
   if (activeFilter == 'all' || activeFilter == 'single') {

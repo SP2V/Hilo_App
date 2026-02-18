@@ -2,7 +2,6 @@ import 'package:hilo/models/number.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
 class NumberDB {
