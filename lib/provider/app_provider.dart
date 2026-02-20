@@ -202,12 +202,11 @@ Predictions calculatePredictions(List<List<int>> history, List<int>? lastRoll) {
 
     final hasTripleMatch = matchesTriple(currentRoll, lastRoll);
     final hasPairMatch = matchesPair(currentRoll, lastRoll);
-    final hasSumMatch = matchesSum(currentRoll, lastRoll);
+    // final hasSumMatch = matchesSum(currentRoll, lastRoll);
 
     final isNextRollTheLastOne = (i + 1 == history.length - 1);
 
-    if ((hasTripleMatch || hasPairMatch || hasSumMatch) &&
-        !isNextRollTheLastOne) {
+    if ((hasTripleMatch || hasPairMatch) && !isNextRollTheLastOne) {
       predictions.totalMatches++;
 
       // Count unique faces (singles)
